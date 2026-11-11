@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: smart_opd_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: hospital_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d hospital_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: smart_opd_backend
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg2://postgres:postgrespassword@postgres:5432/hospital_db
+      AI_SERVICE_URL: http://ai-service:8001
+      SECRET_KEY: smart-opd-super-secret-key-change-in-production-2026
+      FACILITY_TIMEZONE: Asia/Ho_Chi_Minh
+    ports:
+      - "8000:8000"
+
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: smart_opd_ai
+    restart: always
+    ports:
+      - "8001:8001"
+
+volumes:
+  pgdata:

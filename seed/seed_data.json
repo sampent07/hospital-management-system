@@ -1,0 +1,217 @@
+{
+  "service_points": [
+    {
+      "id": "sp-01-reception",
+      "code": "SP-REC",
+      "name": "Quầy Lễ Tân & Tiếp Nhận",
+      "room_number": "Sảnh Tầng 1",
+      "resource_count": 3,
+      "avg_service_duration_seconds": 180,
+      "queue_capacity": 100
+    },
+    {
+      "id": "sp-02-internal",
+      "code": "SP-INT",
+      "name": "Phòng Khám Nội Tổng Quát",
+      "room_number": "Phòng 101",
+      "resource_count": 2,
+      "avg_service_duration_seconds": 600,
+      "queue_capacity": 30
+    },
+    {
+      "id": "sp-03-eye",
+      "code": "SP-EYE",
+      "name": "Phòng Khám Mắt",
+      "room_number": "Phòng 102",
+      "resource_count": 1,
+      "avg_service_duration_seconds": 480,
+      "queue_capacity": 20
+    },
+    {
+      "id": "sp-04-ent",
+      "code": "SP-ENT",
+      "name": "Phòng Khám Tai Mũi Họng",
+      "room_number": "Phòng 103",
+      "resource_count": 1,
+      "avg_service_duration_seconds": 480,
+      "queue_capacity": 20
+    },
+    {
+      "id": "sp-05-xray",
+      "code": "SP-XRAY",
+      "name": "Phòng Chụp X-Quang",
+      "room_number": "Phòng CĐHA-01",
+      "resource_count": 1,
+      "avg_service_duration_seconds": 360,
+      "queue_capacity": 25,
+      "result_wait_duration_seconds": 600
+    },
+    {
+      "id": "sp-06-lab",
+      "code": "SP-LAB",
+      "name": "Phòng Lấy Mẫu Xét Nghiệm",
+      "room_number": "Phòng XN-02",
+      "resource_count": 2,
+      "avg_service_duration_seconds": 240,
+      "queue_capacity": 40,
+      "result_wait_duration_seconds": 1200
+    },
+    {
+      "id": "sp-07-ultrasound",
+      "code": "SP-US",
+      "name": "Phòng Siêu Âm Tổng Quát",
+      "room_number": "Phòng CĐHA-02",
+      "resource_count": 1,
+      "avg_service_duration_seconds": 600,
+      "queue_capacity": 25
+    }
+  ],
+  "exam_services": [
+    {
+      "id": "es-01-kham-noi",
+      "code": "DV-NOI",
+      "name": "Khám Nội Tổng Quát",
+      "category": "Lâm sàng",
+      "has_result_waiting": false,
+      "default_service_point_id": "sp-02-internal"
+    },
+    {
+      "id": "es-02-kham-mat",
+      "code": "DV-MAT",
+      "name": "Khám Chuyên Khoa Mắt",
+      "category": "Lâm sàng",
+      "has_result_waiting": false,
+      "default_service_point_id": "sp-03-eye"
+    },
+    {
+      "id": "es-03-kham-tmh",
+      "code": "DV-TMH",
+      "name": "Khám Tai Mũi Họng",
+      "category": "Lâm sàng",
+      "has_result_waiting": false,
+      "default_service_point_id": "sp-04-ent"
+    },
+    {
+      "id": "es-04-xq-nguc",
+      "code": "DV-XQ-NGUC",
+      "name": "Chụp X-Quang Ngực Thẳng",
+      "category": "Chẩn đoán hình ảnh",
+      "has_result_waiting": true,
+      "default_service_point_id": "sp-05-xray"
+    },
+    {
+      "id": "es-05-xn-mau",
+      "code": "DV-XN-MAU",
+      "name": "Tổng Phân Tích Tế Bào Máu (CBC)",
+      "category": "Xét nghiệm",
+      "has_result_waiting": true,
+      "default_service_point_id": "sp-06-lab"
+    },
+    {
+      "id": "es-06-sieu-am",
+      "code": "DV-SA-BUNG",
+      "name": "Siêu Âm Ổ Bụng Tổng Quát",
+      "category": "Chẩn đoán hình ảnh",
+      "has_result_waiting": false,
+      "default_service_point_id": "sp-07-ultrasound"
+    }
+  ],
+  "package_tiers": [
+    { "id": "tier-01", "code": "TIER-BASIC", "name": "Cơ Bản", "tier_order": 1 },
+    { "id": "tier-02", "code": "TIER-STD", "name": "Tiêu Chuẩn", "tier_order": 2 },
+    { "id": "tier-03", "code": "TIER-ADV", "name": "Nâng Cao", "tier_order": 3 },
+    { "id": "tier-04", "code": "TIER-VIP", "name": "Chuyên Sâu VIP", "tier_order": 4 }
+  ],
+  "packages": [
+    {
+      "id": "pkg-01-basic",
+      "code": "GOI-CO-BAN",
+      "name": "Gói Khám Sức Khỏe Cơ Bản",
+      "package_type": "INDIVIDUAL",
+      "target_group": "Mọi đối tượng",
+      "base_price": 1200000,
+      "package_tier_id": "tier-01",
+      "services": ["es-01-kham-noi", "es-05-xn-mau", "es-04-xq-nguc"]
+    },
+    {
+      "id": "pkg-02-std",
+      "code": "GOI-TIEU-CHUAN",
+      "name": "Gói Khám Tiêu Chuẩn Toàn Diện",
+      "package_type": "INDIVIDUAL",
+      "target_group": "Người trưởng thành",
+      "base_price": 2500000,
+      "package_tier_id": "tier-02",
+      "services": ["es-01-kham-noi", "es-02-kham-mat", "es-03-kham-tmh", "es-05-xn-mau", "es-04-xq-nguc", "es-06-sieu-am"]
+    },
+    {
+      "id": "pkg-03-vip",
+      "code": "GOI-VIP",
+      "name": "Gói Khám Sức Khỏe Chuyên Sâu VIP",
+      "package_type": "INDIVIDUAL",
+      "target_group": "Doanh nhân & Người cao tuổi",
+      "base_price": 5000000,
+      "package_tier_id": "tier-04",
+      "services": ["es-01-kham-noi", "es-02-kham-mat", "es-03-kham-tmh", "es-05-xn-mau", "es-04-xq-nguc", "es-06-sieu-am"]
+    }
+  ],
+  "accounts": [
+    {
+      "id": "acc-01-admin",
+      "username": "admin",
+      "password": "Admin@123",
+      "full_name": "Quản Trị Viên Hệ Thống",
+      "role": "ADMIN",
+      "employee_code": "NV-ADMIN-01"
+    },
+    {
+      "id": "acc-02-coord",
+      "username": "coordinator",
+      "password": "Coord@123",
+      "full_name": "Nguyễn Thị Mai (Điều phối / Thư ký)",
+      "role": "COORDINATOR",
+      "employee_code": "NV-COORD-01",
+      "assigned_service_point_id": "sp-01-reception"
+    },
+    {
+      "id": "acc-03-doctor",
+      "username": "doctor",
+      "password": "Doctor@123",
+      "full_name": "BS. CK1 Nguyễn Văn An",
+      "role": "DOCTOR",
+      "employee_code": "NV-DOC-01",
+      "assigned_service_point_id": "sp-02-internal",
+      "specialty": "Nội Tổng Quát",
+      "license_number": "CCHN-001234/BYT"
+    },
+    {
+      "id": "acc-04-patient",
+      "username": "patient",
+      "password": "Patient@123",
+      "full_name": "Lê Văn Hùng",
+      "role": "PATIENT"
+    }
+  ],
+  "patients": [
+    {
+      "id": "pat-01-hung",
+      "account_id": "acc-04-patient",
+      "full_name": "Lê Văn Hùng",
+      "date_of_birth": "1991-08-20",
+      "gender": "MALE",
+      "marital_status": "MARRIED",
+      "phone_number": "0912345678",
+      "email": "hung.le@example.com",
+      "address": "123 Đường Nguyễn Huệ, Quận 1, TP.HCM"
+    },
+    {
+      "id": "pat-02-lan",
+      "full_name": "Phạm Thị Lan",
+      "date_of_birth": "1998-03-12",
+      "gender": "FEMALE",
+      "marital_status": "SINGLE",
+      "phone_number": "0987654321",
+      "email": "lan.pham@example.com",
+      "address": "456 Đường Lê Lợi, Quận 1, TP.HCM"
+    }
+  ]
+}
