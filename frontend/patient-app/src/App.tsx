@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Route as RouteIcon, Sparkles, Users, Activity } from 'lucide-react';
+import { Route as RouteIcon, Sparkles, Users, Activity, User, PhoneCall, ShieldCheck, ChevronRight, RotateCw, X, CheckCircle2 } from 'lucide-react';
 import { LiveJourney } from './pages/LiveJourney';
 import { PackageAdvisor } from './pages/PackageAdvisor';
 import { QueueBoard } from './pages/QueueBoard';
@@ -16,6 +16,16 @@ export const App: React.FC = () => {
 
   // Mẫu lượt khám ban đầu để demo mượt mà
   const visitId = 'VK-20261111-001';
+
+  // Tự động đóng thông báo sau 3 giây
+  useEffect(() => {
+    if (recalcNotice) {
+      const timer = setTimeout(() => {
+        setRecalcNotice(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [recalcNotice]);
 
   // Khởi tạo lộ trình mẫu
   useEffect(() => {
@@ -72,6 +82,7 @@ export const App: React.FC = () => {
 
   // Yêu cầu tính lại lộ trình
   const handleRecalculate = async () => {
+    setActiveTab('journey');
     setIsRecalculating(true);
     setRecalcNotice(null);
 
@@ -88,7 +99,6 @@ export const App: React.FC = () => {
       if (res.ok) {
         const data: Route = await res.json();
         if (data.isBetter && data.steps.length > 0) {
-          // Xuất hiện modal để bệnh nhân tự quyết định!
           setProposedRoute(data);
         } else {
           setRecalcNotice(data.message || 'Lộ trình hiện tại đã tối ưu, bạn không cần thay đổi.');
@@ -103,7 +113,6 @@ export const App: React.FC = () => {
             creationReason: 'RECALC_REQUEST',
             status: 'ACTIVE',
             suggestionSource: 'AI_RL',
-            estimatedTotalDurationDuration: 2400,
             estimatedTotalDurationSeconds: 2400, // 40 phút (tiết kiệm 12 phút!)
             steps: [
               {
@@ -198,37 +207,219 @@ export const App: React.FC = () => {
     }
   };
 
+  const navItems = [
+    {
+      id: 'journey' as const,
+      name: 'Lộ Trình Khám',
+      desc: 'Hành trình & thứ tự phòng khám',
+      icon: RouteIcon,
+      badge: currentRoute ? `${currentRoute.steps.filter((s) => s.status === 'COMPLETED').length}/${currentRoute.steps.length}` : undefined
+    },
+    {
+      id: 'advisor' as const,
+      name: 'Gợi Ý Gói Khám',
+      desc: 'Khảo sát nhu cầu sức khỏe',
+      icon: Sparkles
+    },
+    {
+      id: 'queues' as const,
+      name: 'Bảng Chờ Viện',
+      desc: 'Tình trạng tải các điểm khám',
+      icon: Users
+    }
+  ];
+
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col font-sans pb-20">
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
       {/* Top Header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-30 px-4 py-3.5 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-md">
-            <Activity className="w-5 h-5" />
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-30 px-4 md:px-8 py-3.5 flex items-center justify-between shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-700 to-indigo-600 text-white flex items-center justify-center shadow-md">
+            <Activity className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-sm font-bold text-slate-800">Cổng Bệnh Nhân Smart OPD</h1>
-            <span className="text-[11px] text-slate-500 font-mono">Bệnh nhân: Lê Văn Hùng</span>
+            <h1 className="text-base font-extrabold text-slate-900 tracking-tight">Cổng Bệnh Nhân Smart OPD</h1>
+            <p className="text-xs text-slate-500 hidden sm:block">Điều phối khám ngoại trú & tối ưu thời gian chờ</p>
           </div>
         </div>
-        <span className="text-xs bg-blue-50 text-blue-700 font-bold px-2.5 py-1 rounded-full border border-blue-200">
-          STT: #001
-        </span>
+
+        {/* Thông tin nhanh bệnh nhân trên Header */}
+        <div className="flex items-center gap-3">
+          <div className="text-right hidden sm:block">
+            <div className="text-xs font-bold text-slate-800">Lê Văn Hùng</div>
+            <div className="text-[11px] text-slate-500 font-mono">Mã BN: BN-20261111 • Nam, 38 tuổi</div>
+          </div>
+          <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-2xl px-3 py-1.5 shadow-sm">
+            <span className="text-[11px] font-semibold text-blue-700">STT Khám:</span>
+            <span className="text-sm font-black text-blue-900">#001</span>
+          </div>
+        </div>
       </header>
 
-      {/* Main Screen Content */}
-      <main className="flex-1">
-        {activeTab === 'journey' && (
-          <LiveJourney
-            currentRoute={currentRoute}
-            onRecalculateRequest={handleRecalculate}
-            isRecalculating={isRecalculating}
-            recalcNotice={recalcNotice}
-          />
-        )}
-        {activeTab === 'advisor' && <PackageAdvisor />}
-        {activeTab === 'queues' && <QueueBoard />}
-      </main>
+      {/* Main Container: Bố cục 2 Cột (Sidebar Trái Xếp Dọc 3 Mục + Nội Dung Phải Rộng Rãi) */}
+      <div className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 lg:p-8 flex flex-col md:flex-row gap-6">
+        {/* Sidebar Bên Trái: Xếp 3 mục theo hàng dọc, liên tiếp nhau */}
+        <aside className="w-full md:w-72 lg:w-80 shrink-0 space-y-5">
+          {/* Menu Điều Hướng Dọc 4 Mục */}
+          <div className="bg-white p-3 rounded-3xl border-2 border-blue-200 shadow-sm space-y-1.5">
+            <div className="px-3 pt-2 pb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              Chức Năng Chính
+            </div>
+
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full flex items-center justify-between p-3 rounded-2xl text-left transition-all ${
+                    isActive
+                      ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20 font-bold'
+                      : 'hover:bg-slate-100 text-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                        isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
+                      }`}
+                    >
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="text-sm leading-tight">{item.name}</div>
+                      <div className={`text-[11px] leading-tight mt-0.5 ${isActive ? 'text-blue-100' : 'text-slate-400'}`}>
+                        {item.desc}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    {item.badge && (
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          isActive ? 'bg-white text-blue-700' : 'bg-blue-100 text-blue-700'
+                        }`}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+                    <ChevronRight className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-300'}`} />
+                  </div>
+                </button>
+              );
+            })}
+
+            {/* Mục Thứ 4: Lộ Trình Tối Ưu Hơn */}
+            <div className="pt-2 border-t border-slate-100">
+              <button
+                onClick={handleRecalculate}
+                disabled={isRecalculating}
+                className="w-full flex items-center justify-between p-3 rounded-2xl text-left transition-all hover:bg-slate-100 text-slate-700 group"
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-slate-100 text-slate-600 ${
+                      isRecalculating ? 'animate-spin text-blue-600' : ''
+                    }`}
+                  >
+                    <RotateCw className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold leading-tight text-slate-800">Lộ Trình Tối Ưu Hơn</div>
+                    <div className="text-[11px] leading-tight mt-0.5 text-slate-400">
+                      {isRecalculating ? 'Đang phân tích lưu lượng...' : 'Tìm phương án nhanh hơn'}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center">
+                  <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 group-hover:translate-x-0.5 transition-all" />
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Thẻ Thông Tin Bệnh Nhân Chi Tiết (Khắc phục cảm giác trống vắng) */}
+          <div className="bg-white p-5 rounded-3xl border-2 border-blue-200 shadow-sm space-y-4 hidden md:block">
+            <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100">
+              <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center">
+                <User className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-xs text-slate-400 font-medium">Hồ Sơ Bệnh Nhân</div>
+                <div className="text-sm font-bold text-slate-800">Lê Văn Hùng</div>
+              </div>
+            </div>
+
+            <div className="space-y-2 text-xs">
+              <div className="flex items-center justify-between text-slate-600">
+                <span>Mã Lượt Khám:</span>
+                <span className="font-mono font-bold text-slate-800">{visitId}</span>
+              </div>
+              <div className="flex items-center justify-between text-slate-600">
+                <span>Trạng Thái:</span>
+                <span className="font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
+                  Đang Khám
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-slate-600">
+                <span>BHYT / CCCD:</span>
+                <span className="flex items-center gap-1 text-slate-700 font-medium">
+                  <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+                  Đã Xác Thực
+                </span>
+              </div>
+            </div>
+
+            {/* Trợ giúp nhanh */}
+            <div className="p-3 bg-blue-50/60 rounded-2xl border border-blue-100 space-y-1.5">
+              <div className="text-[11px] font-bold text-blue-900 flex items-center gap-1.5">
+                <PhoneCall className="w-3.5 h-3.5 text-blue-600" />
+                <span>Hỗ Trợ Bệnh Nhân</span>
+              </div>
+              <p className="text-[11px] text-blue-700 leading-snug">
+                Nếu cần điều phối viên hỗ trợ di chuyển, vui lòng liên hệ <strong>Quầy Lễ Tân (Tầng 1)</strong> hoặc hotline <strong>1900 8899</strong>.
+              </p>
+            </div>
+          </div>
+        </aside>
+
+        {/* Cột Phải: Nội Dung Chính Mở Rộng Rộng Rãi */}
+        <main className="flex-1 min-w-0">
+          {activeTab === 'journey' && (
+            <LiveJourney
+              currentRoute={currentRoute}
+            />
+          )}
+          {activeTab === 'advisor' && <PackageAdvisor />}
+          {activeTab === 'queues' && <QueueBoard />}
+        </main>
+      </div>
+
+      {/* Cửa Sổ Nhỏ Thông Báo Nổi (Toast Notification) - Có Nút Đóng & Tự Biến Mất */}
+      {recalcNotice && (
+        <div className="fixed top-20 right-4 sm:right-8 z-50 max-w-sm w-full bg-white border border-emerald-200 rounded-3xl shadow-2xl p-4 flex items-start gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
+            <CheckCircle2 className="w-5 h-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-xs font-bold text-slate-900">
+              Thông Báo Lộ Trình
+            </div>
+            <p className="text-xs text-slate-600 mt-1 leading-relaxed">{recalcNotice}</p>
+          </div>
+          <button
+            onClick={() => setRecalcNotice(null)}
+            className="p-1 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors shrink-0"
+            title="Đóng thông báo"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Popup Bắt Buộc: Bệnh Nhân Quyết Định Chấp Nhận Hoặc Giữ Cũ */}
       {proposedRoute && (
@@ -240,39 +431,6 @@ export const App: React.FC = () => {
           isSubmitting={isSubmittingDecision}
         />
       )}
-
-      {/* Bottom Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-2 px-6 flex items-center justify-around z-40 shadow-lg">
-        <button
-          onClick={() => setActiveTab('journey')}
-          className={`flex flex-col items-center gap-1 transition-all ${
-            activeTab === 'journey' ? 'text-blue-600 font-bold' : 'text-slate-400'
-          }`}
-        >
-          <RouteIcon className="w-5 h-5" />
-          <span className="text-[10px]">Lộ Trình Khám</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('advisor')}
-          className={`flex flex-col items-center gap-1 transition-all ${
-            activeTab === 'advisor' ? 'text-blue-600 font-bold' : 'text-slate-400'
-          }`}
-        >
-          <Sparkles className="w-5 h-5" />
-          <span className="text-[10px]">Gợi Ý Gói Khám</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('queues')}
-          className={`flex flex-col items-center gap-1 transition-all ${
-            activeTab === 'queues' ? 'text-blue-600 font-bold' : 'text-slate-400'
-          }`}
-        >
-          <Users className="w-5 h-5" />
-          <span className="text-[10px]">Bảng Chờ Viện</span>
-        </button>
-      </nav>
     </div>
   );
 };
