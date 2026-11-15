@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, CheckCircle2, XCircle, Clock, ArrowRight } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, ArrowRight } from 'lucide-react';
 import { Route } from '../types';
 import { formatDurationMinutes } from '../utils/formatTime';
 
@@ -26,10 +26,7 @@ export const RouteDecisionModal: React.FC<RouteDecisionModalProps> = ({
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
       <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-5">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-amber-300" />
-            <h3 className="text-base font-bold">Đề Xuất Lộ Trình Tối Ưu Mới</h3>
-          </div>
+          <h3 className="text-base font-bold">Đề Xuất Lộ Trình Tối Ưu Mới</h3>
           <p className="text-xs text-blue-100 mt-1">
             Hệ thống vừa phân tích lưu lượng thực tế và tìm thấy phương án giúp bạn giảm thời gian chờ đợi.
           </p>
