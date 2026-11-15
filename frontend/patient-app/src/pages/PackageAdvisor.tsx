@@ -2,7 +2,11 @@ import React, { useState } from 'react';
 import { HelpCircle, AlertTriangle, Sparkles, CheckCircle2, ShieldCheck, Stethoscope } from 'lucide-react';
 import { PackageAdvisorResult } from '../types';
 
-export const PackageAdvisor: React.FC = () => {
+interface PackageAdvisorProps {
+  onRegisterSuccess?: (packageName: string) => void;
+}
+
+export const PackageAdvisor: React.FC<PackageAdvisorProps> = ({ onRegisterSuccess }) => {
   const [age, setAge] = useState<number>(35);
   const [gender, setGender] = useState<string>('MALE');
   const [maritalStatus, setMaritalStatus] = useState<string>('MARRIED');
@@ -178,8 +182,12 @@ export const PackageAdvisor: React.FC = () => {
             </div>
 
             <button
-              onClick={() => alert('Vui lòng đến Quầy Lễ Tân (Tầng 1) để đăng ký gói khám này vào lượt khám!')}
-              className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-sm transition-all text-center"
+              onClick={() => {
+                if (onRegisterSuccess && result?.recommended_package) {
+                  onRegisterSuccess(result.recommended_package.name);
+                }
+              }}
+              className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-sm transition-all text-center cursor-pointer"
             >
               Đăng Ký Gói Khám Này Tại Quầy
             </button>

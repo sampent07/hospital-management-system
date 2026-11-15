@@ -11,21 +11,25 @@ export const App: React.FC = () => {
   const [currentRoute, setCurrentRoute] = useState<Route | null>(null);
   const [proposedRoute, setProposedRoute] = useState<Route | null>(null);
   const [isRecalculating, setIsRecalculating] = useState<boolean>(false);
-  const [recalcNotice, setRecalcNotice] = useState<string | null>(null);
+  const [toastNotice, setToastNotice] = useState<{ title: string; message: string } | null>(null);
   const [isSubmittingDecision, setIsSubmittingDecision] = useState<boolean>(false);
+
+  const showToast = (message: string, title: string = 'Thông Báo Lộ Trình') => {
+    setToastNotice({ title, message });
+  };
 
   // Mẫu lượt khám ban đầu để demo mượt mà
   const visitId = 'VK-20261111-001';
 
   // Tự động đóng thông báo sau 3 giây
   useEffect(() => {
-    if (recalcNotice) {
+    if (toastNotice) {
       const timer = setTimeout(() => {
-        setRecalcNotice(null);
+        setToastNotice(null);
       }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [recalcNotice]);
+  }, [toastNotice]);
 
   // Khởi tạo lộ trình mẫu
   useEffect(() => {
@@ -84,7 +88,7 @@ export const App: React.FC = () => {
   const handleRecalculate = async () => {
     setActiveTab('journey');
     setIsRecalculating(true);
-    setRecalcNotice(null);
+    setToastNotice(null);
 
     try {
       const res = await fetch(`/api/v1/routes/visits/${visitId}/recalculate`, {
@@ -101,7 +105,7 @@ export const App: React.FC = () => {
         if (data.isBetter && data.steps.length > 0) {
           setProposedRoute(data);
         } else {
-          setRecalcNotice(data.message || 'Lộ trình hiện tại đã tối ưu, bạn không cần thay đổi.');
+          showToast(data.message || 'Lộ trình hiện tại đã tối ưu, bạn không cần thay đổi.');
         }
       } else {
         // Mô phỏng phương án tối ưu nếu API chưa có visit này
@@ -182,7 +186,7 @@ export const App: React.FC = () => {
       }
       setProposedRoute(null);
       setIsSubmittingDecision(false);
-      setRecalcNotice('Đã áp dụng lộ trình mới thành công! Chúc bạn có trải nghiệm khám thuận tiện.');
+      showToast('Đã áp dụng lộ trình mới thành công! Chúc bạn có trải nghiệm khám thuận tiện.');
     }
   };
 
@@ -203,7 +207,7 @@ export const App: React.FC = () => {
     } finally {
       setProposedRoute(null);
       setIsSubmittingDecision(false);
-      setRecalcNotice('Đã giữ nguyên lộ trình hiện tại của bạn.');
+      showToast('Đã giữ nguyên lộ trình hiện tại của bạn.');
     }
   };
 
@@ -394,25 +398,34 @@ export const App: React.FC = () => {
               currentRoute={currentRoute}
             />
           )}
-          {activeTab === 'advisor' && <PackageAdvisor />}
+          {activeTab === 'advisor' && (
+            <PackageAdvisor
+              onRegisterSuccess={(pkgName) =>
+                showToast(
+                  `Đã ghi nhận yêu cầu đăng ký "${pkgName}". Vui lòng đến Quầy Lễ Tân (Tầng 1) để nhận số thứ tự và hoàn tất thủ tục.`,
+                  'Đăng Ký Thành Công'
+                )
+              }
+            />
+          )}
           {activeTab === 'queues' && <QueueBoard />}
         </main>
       </div>
 
       {/* Cửa Sổ Nhỏ Thông Báo Nổi (Toast Notification) - Có Nút Đóng & Tự Biến Mất */}
-      {recalcNotice && (
-        <div className="fixed top-20 right-4 sm:right-8 z-50 max-w-sm w-full bg-white border border-emerald-200 rounded-3xl shadow-2xl p-4 flex items-start gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
+      {toastNotice && (
+        <div className="fixed top-20 right-4 sm:right-8 z-50 max-w-sm w-full bg-white border-2 border-emerald-300 rounded-3xl shadow-2xl p-4 flex items-start gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
           <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
             <CheckCircle2 className="w-5 h-5" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-xs font-bold text-slate-900">
-              Thông Báo Lộ Trình
+              {toastNotice.title}
             </div>
-            <p className="text-xs text-slate-600 mt-1 leading-relaxed">{recalcNotice}</p>
+            <p className="text-xs text-slate-600 mt-1 leading-relaxed">{toastNotice.message}</p>
           </div>
           <button
-            onClick={() => setRecalcNotice(null)}
+            onClick={() => setToastNotice(null)}
             className="p-1 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors shrink-0"
             title="Đóng thông báo"
           >
