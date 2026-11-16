@@ -18,7 +18,7 @@ router = APIRouter(prefix="/visits", tags=["Lượt khám & Tiến độ dịch 
 @router.post("", response_model=VisitResponse, summary="Tiếp nhận bệnh nhân / Tạo lượt khám mới")
 def create_visit(
     req: VisitCreateRequest,
-    payload: dict = Depends(get_current_user_payload),
+    payload: dict = Depends(require_permission("visit:create")),
     db: Session = Depends(get_db)
 ):
     service = VisitService(db)
@@ -27,7 +27,11 @@ def create_visit(
 
 
 @router.get("/{visit_id}", response_model=VisitResponse, summary="Xem chi tiết lượt khám và tiến độ")
-def get_visit_detail(visit_id: str, db: Session = Depends(get_db)):
+def get_visit_detail(
+    visit_id: str,
+    payload: dict = Depends(require_permission("visit:view")),
+    db: Session = Depends(get_db),
+):
     service = VisitService(db)
     visit = service.visit_repo.get_visit_with_details(visit_id)
     if not visit:

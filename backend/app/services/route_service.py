@@ -13,6 +13,7 @@ from app.core.config import settings
 from app.core.database import get_utc_now
 from app.core.websocket import ws_manager
 from app.schemas.route import RouteResponse, RouteStepResponse, RouteDecisionRequest
+from app.core.exceptions import PermissionDenied
 
 
 class RouteService:
@@ -21,6 +22,15 @@ class RouteService:
         self.route_repo = RouteRepository(db)
         self.progress_repo = ProgressRepository(db)
         self.queue_service = QueueService(db)
+
+    def assert_actor_can_access_visit(self, visit_id: str, actor_id: str) -> None:
+        """Kiểm tra bệnh nhân chỉ thao tác lộ trình thuộc tài khoản của mình."""
+        role = self.route_repo.get_account_role(actor_id)
+        if role == "PATIENT" and self.route_repo.patient_owns_visit(actor_id, visit_id):
+            return
+        if role in {"COORDINATOR", "DOCTOR"}:
+            return
+        raise PermissionDenied("Bạn không có quyền truy cập lượt khám này.")
 
     async def calculate_or_recalculate_route(
         self,
@@ -141,6 +151,7 @@ class RouteService:
         route = self.route_repo.get_by_id(route_id)
         if not route:
             raise ResourceNotFound("Route", route_id)
+        self.assert_actor_can_access_visit(route.visit_id, actor_id)
 
         decision = RouteDecision(
             route_id=route_id,

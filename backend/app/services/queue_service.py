@@ -2,7 +2,7 @@ from typing import Dict, List, Any
 from sqlalchemy.orm import Session
 from app.models.service import ServicePoint
 from app.repositories.queue_repository import QueueRepository
-from app.schemas.queue import ServicePointQueueSummary, QueuePatientItem
+from app.schemas.queue import ServicePointQueueSummary, QueuePatientItem, PatientQueueSummary
 
 
 class QueueService:
@@ -57,6 +57,28 @@ class QueueService:
                     recently_completed_patients=[QueuePatientItem(**p) for p in patient_buckets["completed"]]
                 )
             )
+        return summaries
+
+    def get_patient_queue_summaries(self) -> List[PatientQueueSummary]:
+        """Trả số liệu tổng hợp cho bệnh nhân mà không truy vấn danh tính người khác."""
+        service_points = self.db.query(ServicePoint).filter(ServicePoint.status == "ACTIVE").all()
+        metrics_by_sp = self.queue_repo.get_all_service_point_queue_metrics()
+        summaries = []
+        for sp in service_points:
+            metric = metrics_by_sp.get(sp.id, {"waiting_count": 0, "in_progress_count": 0})
+            waiting_count = metric["waiting_count"]
+            summaries.append(PatientQueueSummary(
+                service_point_id=sp.id,
+                service_point_code=sp.code,
+                service_point_name=sp.name,
+                room_number=sp.room_number,
+                waiting_count=waiting_count,
+                in_progress_count=metric["in_progress_count"],
+                estimated_wait_seconds=self.calculate_estimated_wait_seconds(
+                    waiting_count, sp.avg_service_duration_seconds, sp.resource_count
+                ),
+                is_full=waiting_count >= sp.queue_capacity,
+            ))
         return summaries
 
     def get_single_queue_summary(self, service_point_id: str) -> ServicePointQueueSummary:

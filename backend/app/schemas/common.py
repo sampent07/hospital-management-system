@@ -15,6 +15,10 @@ class MessageResponse(BaseModel):
     message: str
 
 
+class PublicConfigurationResponse(BaseModel):
+    facility_timezone: str
+
+
 class PaginatedResponse(BaseModel, Generic[T]):
     items: List[T]
     total: int

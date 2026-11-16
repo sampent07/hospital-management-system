@@ -8,6 +8,9 @@ from app.api.v1 import (
     package_router,
     admin_router,
     health_router,
+    patient_router,
+    configuration_router,
+    doctor_router,
 )
 
 api_router = APIRouter()
@@ -19,4 +22,7 @@ api_router.include_router(queue_router.router)
 api_router.include_router(route_router.router)
 api_router.include_router(service_order_router.router)
 api_router.include_router(package_router.router)
+api_router.include_router(doctor_router.router)
+api_router.include_router(patient_router.router)
+api_router.include_router(configuration_router.router)
 api_router.include_router(admin_router.router)

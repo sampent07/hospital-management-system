@@ -15,6 +15,7 @@ class Visit(Base):
     id = Column(String(36), primary_key=True, default=generate_uuid)
     visit_code = Column(String(50), unique=True, nullable=False, index=True)
     patient_id = Column(String(36), ForeignKey("patients.id"), nullable=False)
+    appointment_id = Column(String(36), ForeignKey("appointments.id"), nullable=True, unique=True)
     package_id = Column(String(36), ForeignKey("packages.id"), nullable=True)
     company_registration_id = Column(String(36), ForeignKey("company_package_registrations.id"), nullable=True)
     visit_type = Column(String(30), nullable=False, default="PACKAGE")  # PACKAGE, SYMPTOM_ORDER

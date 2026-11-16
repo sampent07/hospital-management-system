@@ -30,3 +30,15 @@ class ServicePointQueueSummary(BaseModel):
     waiting_patients: List[QueuePatientItem] = []
     in_progress_patients: List[QueuePatientItem] = []
     recently_completed_patients: List[QueuePatientItem] = []
+
+
+class PatientQueueSummary(BaseModel):
+    """Thông tin tổng hợp không định danh dành riêng cho giao diện bệnh nhân."""
+    service_point_id: str
+    service_point_code: str
+    service_point_name: str
+    room_number: Optional[str] = None
+    waiting_count: int
+    in_progress_count: int
+    estimated_wait_seconds: int
+    is_full: bool

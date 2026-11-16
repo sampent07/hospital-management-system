@@ -34,7 +34,13 @@ class VisitService:
         self.visit_repo = VisitRepository(db)
         self.progress_repo = ProgressRepository(db)
 
-    def create_visit(self, req: VisitCreateRequest, creator_id: Optional[str] = None) -> Visit:
+    def create_visit(
+        self,
+        req: VisitCreateRequest,
+        creator_id: Optional[str] = None,
+        appointment_id: Optional[str] = None,
+        commit: bool = True,
+    ) -> Visit:
         """Tiếp nhận bệnh nhân, tạo lượt khám và sinh các dịch vụ khởi tạo."""
         patient = self.db.query(Patient).filter(Patient.id == req.patient_id).first()
         if not patient:
@@ -47,6 +53,7 @@ class VisitService:
         new_visit = Visit(
             visit_code=visit_code,
             patient_id=req.patient_id,
+            appointment_id=appointment_id,
             package_id=req.package_id,
             visit_type=req.visit_type,
             reception_channel=req.reception_channel,
@@ -76,7 +83,10 @@ class VisitService:
                     )
                     self.db.add(progress)
 
-        self.db.commit()
+        if commit:
+            self.db.commit()
+        else:
+            self.db.flush()
         return self.visit_repo.get_visit_with_details(new_visit.id)
 
     async def update_progress_status(

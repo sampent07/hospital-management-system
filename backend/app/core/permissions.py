@@ -22,6 +22,7 @@ ROLE_PERMISSIONS = {
         "dashboard:view",
         "logs:view",
         "queue:view_all",
+        "visit:view",
     },
     "COORDINATOR": {
         "visit:create",
@@ -32,6 +33,7 @@ ROLE_PERMISSIONS = {
         "queue:view",
         "route:support_recalc",
         "route:proxy_decision",
+        "package_registration:approve",
         "account:view_profile",
     },
     "DOCTOR": {
@@ -57,6 +59,11 @@ ROLE_PERMISSIONS = {
         "package:self_view",
         "queue:self_view",
         "account:view_profile",
+        "account:self_view",
+        "account:self_update",
+        "package_registration:self_create",
+        "package_registration:self_pay",
+        "appointment:self_manage",
     }
 }
 

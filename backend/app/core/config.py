@@ -12,7 +12,8 @@ class Settings(BaseSettings):
     # Bảo mật JWT
     SECRET_KEY: str = "smart-opd-super-secret-key-change-in-production-2026"
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 120
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 10080  # 7 ngày (tránh hết hạn phiên khi test/demo)
+    PATIENT_DEMO_VERIFICATION_TTL_MINUTES: int = 10
     
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = [

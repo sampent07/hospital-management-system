@@ -20,6 +20,7 @@ async def generate_initial_route(
     db: Session = Depends(get_db)
 ):
     service = RouteService(db)
+    service.assert_actor_can_access_visit(visit_id, payload.get("sub"))
     return await service.calculate_or_recalculate_route(
         visit_id,
         is_initial=True,
@@ -39,6 +40,7 @@ async def recalculate_route(
     Chỉ đề xuất lộ trình mới nếu tiết kiệm >= 3 phút và đúng ràng buộc.
     """
     service = RouteService(db)
+    service.assert_actor_can_access_visit(visit_id, payload.get("sub"))
     return await service.calculate_or_recalculate_route(
         visit_id,
         is_initial=False,

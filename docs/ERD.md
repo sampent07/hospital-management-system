@@ -173,17 +173,31 @@
 
 ---
 
-### Nhóm 6: Lịch hẹn & Hồ sơ bệnh án
-18. `appointments` (LICHHEN)
+### Nhóm 6: Lịch khám, Lịch hẹn & Hồ sơ bệnh án
+18. `doctor_schedules` (LICHKHAM)
+    - `id`: UUID, Primary Key
+    - `doctor_id`: UUID, Not Null, Foreign Key -> `doctors(id)`
+    - `service_point_id`: UUID, Not Null, Foreign Key -> `service_points(id)` (Phòng khám)
+    - `package_id`: UUID, Nullable, Foreign Key -> `packages(id)` (Gói khám tương thích)
+    - `work_date`: DATE, Not Null (NgayThang làm việc)
+    - `start_time`: VARCHAR(10), Not Null (TGBatDau e.g. "07:30")
+    - `end_time`: VARCHAR(10), Not Null (TGKetThuc e.g. "08:30")
+    - `max_slots`: INT, Not Null, default 10 (SLToiDa số lượng nhận tối đa của ca)
+    - `current_booked`: INT, Not Null, default 0 (SLHienTai số lượng đã được đặt hẹn)
+    - `status`: VARCHAR(20), Not Null, default 'AVAILABLE' (`AVAILABLE`, `FULL`, `OFF`, `CANCELLED`)
+
+19. `appointments` (LICHHEN)
     - `id`: UUID, Primary Key
     - `patient_id`: UUID, Not Null, Foreign Key -> `patients(id)`
     - `package_id`: UUID, Nullable, Foreign Key -> `packages(id)`
+    - `doctor_schedule_id`: UUID, Nullable, Foreign Key -> `doctor_schedules(id)`
+    - `doctor_id`: UUID, Nullable, Foreign Key -> `doctors(id)`
     - `appointment_time`: TIMESTAMPTZ, Not Null
-    - `appointment_type`: VARCHAR(30), Not Null (`FIRST_VISIT`, `FOLLOW_UP`, `PERIODIC`)
+    - `appointment_type`: VARCHAR(30), Not Null (`FIRST_VISIT`, `FOLLOW_UP`, `PERIODIC`, `PACKAGE`)
     - `notes`: TEXT, Nullable
     - `status`: VARCHAR(20), Not Null, default 'SCHEDULED' (`SCHEDULED`, `CONFIRMED`, `CHECKED_IN`, `CANCELLED`)
 
-19. `medical_records` (HOSOBENHAN)
+20. `medical_records` (HOSOBENHAN)
     - `id`: UUID, Primary Key
     - `patient_id`: UUID, Not Null, Foreign Key -> `patients(id)`
     - `medical_history`: TEXT, Nullable (Tiền sử bệnh lý bản thân)

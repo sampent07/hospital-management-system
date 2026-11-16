@@ -45,6 +45,12 @@ class Doctor(Base):
     id = Column(String(36), ForeignKey("staff_members.id"), primary_key=True)
     specialty = Column(String(100), nullable=False)
     license_number = Column(String(50), nullable=False)
+    academic_title = Column(String(50), nullable=True, default="BS. CK1")
+    avatar_url = Column(String(255), nullable=True)
+    education = Column(Text, nullable=True)
+    experience = Column(Text, nullable=True)
+    memberships = Column(Text, nullable=True)
+    schedule_summary = Column(String(200), nullable=True)
 
     staff_member = relationship("StaffMember", back_populates="doctor_profile")
 

@@ -23,7 +23,7 @@ Hệ thống điều phối khám chữa bệnh thông minh (**Smart OPD Orchest
 
 ## 2. NGUYÊN TẮC VÀNG KHI VIBE CODE (BẤT BIẾN)
 
-Trước khi viết bất kỳ dòng code nào, bạn **phải tuân thủ 10 nguyên tắc sau** (trích xuất từ thư mục `AGENT/` và `docs/DOMAIN_RULES.md`):
+Trước khi viết bất kỳ dòng code nào, hãy đọc `AGENTS.md` ở gốc, hướng dẫn `AGENTS.md` gần nhất với phần cần sửa và `docs/DOMAIN_RULES.md`. Tóm tắt dưới đây chỉ để nhắc nhanh, không thay thế các nguồn chuẩn đó:
 
 1. **AI chỉ gợi ý, Bệnh nhân quyết định**: Không bao giờ tự động áp đặt lộ trình mới khi bệnh nhân chưa bấm xác nhận.
 2. **Không can thiệp chẩn đoán y khoa**: Bác sĩ là người duy nhất có quyền chỉ định dịch vụ.

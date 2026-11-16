@@ -14,7 +14,10 @@ from app.models.customer import (
     Patient,
     Company,
     CompanyPackageRegistration,
+    DoctorSchedule,
     Appointment,
+    PatientVerification,
+    PatientPackageRegistration,
     MedicalRecord,
 )
 from app.models.visit import Visit, VisitProgress
@@ -48,7 +51,10 @@ __all__ = [
     "Patient",
     "Company",
     "CompanyPackageRegistration",
+    "DoctorSchedule",
     "Appointment",
+    "PatientVerification",
+    "PatientPackageRegistration",
     "MedicalRecord",
     "Visit",
     "VisitProgress",

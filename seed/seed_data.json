@@ -187,7 +187,7 @@
       "id": "acc-04-patient",
       "username": "patient",
       "password": "Patient@123",
-      "full_name": "Lê Văn Hùng",
+      "full_name": "Nguyễn Minh An",
       "role": "PATIENT"
     }
   ],
@@ -195,23 +195,138 @@
     {
       "id": "pat-01-hung",
       "account_id": "acc-04-patient",
-      "full_name": "Lê Văn Hùng",
-      "date_of_birth": "1991-08-20",
+      "full_name": "Nguyễn Minh An",
+      "date_of_birth": "1994-08-20",
       "gender": "MALE",
       "marital_status": "MARRIED",
-      "phone_number": "0912345678",
-      "email": "hung.le@example.com",
-      "address": "123 Đường Nguyễn Huệ, Quận 1, TP.HCM"
+      "phone_number": "0900000001",
+      "email": "minh.an@example.com",
+      "address": "Khu vực Quận 1, TP.HCM",
+      "id_card_number": "DEMO-ID-000001"
+    }
+  ],
+  "patient_package_registrations": [
+    {
+      "id": "4629587e-3c9c-4d28-92cd-e27cd7e6b002",
+      "patient_id": "pat-01-hung",
+      "package_id": "pkg-01-basic",
+      "status": "PAID",
+      "minutes_ago": 120,
+      "reviewed_by_id": "acc-02-coord",
+      "paid_minutes_ago": 110,
+      "payment_method": "DEMO"
     },
     {
-      "id": "pat-02-lan",
-      "full_name": "Phạm Thị Lan",
-      "date_of_birth": "1998-03-12",
-      "gender": "FEMALE",
-      "marital_status": "SINGLE",
-      "phone_number": "0987654321",
-      "email": "lan.pham@example.com",
-      "address": "456 Đường Lê Lợi, Quận 1, TP.HCM"
+      "id": "4629587e-3c9c-4d28-92cd-e27cd7e6b003",
+      "patient_id": "pat-01-hung",
+      "package_id": "pkg-02-std",
+      "status": "PAID",
+      "minutes_ago": 30,
+      "reviewed_by_id": "acc-02-coord",
+      "paid_minutes_ago": 20,
+      "payment_method": "DEMO"
+    },
+    {
+      "id": "4629587e-3c9c-4d28-92cd-e27cd7e6b004",
+      "patient_id": "pat-01-hung",
+      "package_id": "pkg-03-vip",
+      "status": "PENDING_APPROVAL",
+      "minutes_ago": 5
+    }
+  ],
+  "appointments": [
+    {
+      "id": "8c719d1b-089a-4f9a-863d-a5b75ab67a01",
+      "patient_id": "pat-01-hung",
+      "package_id": "pkg-01-basic",
+      "package_registration_id": "4629587e-3c9c-4d28-92cd-e27cd7e6b002",
+      "appointment_code": "APT-DEMO-AN-001",
+      "appointment_time": "2026-11-13T01:30:00Z",
+      "doctor_id": "acc-03-doctor",
+      "status": "CHECKED_IN"
+    },
+    {
+      "id": "8c719d1b-089a-4f9a-863d-a5b75ab67a02",
+      "patient_id": "pat-01-hung",
+      "package_id": "pkg-02-std",
+      "package_registration_id": "4629587e-3c9c-4d28-92cd-e27cd7e6b003",
+      "appointment_code": "APT-DEMO-AN-002",
+      "appointment_time": "2026-11-14T02:30:00Z",
+      "doctor_id": "acc-03-doctor",
+      "status": "CONFIRMED"
+    }
+  ],
+  "visits": [
+    {
+      "id": "c9c0b7c3-0e87-4ccb-b4a7-18b587cfc101",
+      "visit_code": "VK-DEMO-001",
+      "patient_id": "pat-01-hung",
+      "appointment_id": "8c719d1b-089a-4f9a-863d-a5b75ab67a01",
+      "package_id": "pkg-01-basic",
+      "visit_type": "PACKAGE",
+      "reception_channel": "APP",
+      "queue_number": 1,
+      "status": "IN_PROGRESS",
+      "minutes_ago": 55,
+      "created_by_id": "acc-04-patient"
+    }
+  ],
+  "visit_progress": [
+    {
+      "id": "fe9441ba-50df-4d0c-9d73-a32b010a8101",
+      "visit_id": "c9c0b7c3-0e87-4ccb-b4a7-18b587cfc101",
+      "exam_service_id": "es-01-kham-noi",
+      "service_point_id": "sp-02-internal",
+      "status": "COMPLETED",
+      "minutes_ago": 45,
+      "performed_by_id": "acc-03-doctor"
+    },
+    {
+      "id": "fe9441ba-50df-4d0c-9d73-a32b010a8102",
+      "visit_id": "c9c0b7c3-0e87-4ccb-b4a7-18b587cfc101",
+      "exam_service_id": "es-05-xn-mau",
+      "service_point_id": "sp-06-lab",
+      "status": "WAITING",
+      "minutes_ago": 35,
+      "performed_by_id": "acc-02-coord"
+    },
+    {
+      "id": "fe9441ba-50df-4d0c-9d73-a32b010a8103",
+      "visit_id": "c9c0b7c3-0e87-4ccb-b4a7-18b587cfc101",
+      "exam_service_id": "es-04-xq-nguc",
+      "service_point_id": "sp-05-xray",
+      "status": "NOT_STARTED",
+      "minutes_ago": 55
+    }
+  ],
+  "routes": [
+    {
+      "id": "27990ca9-5129-40b4-a444-e1e94e927101",
+      "visit_id": "c9c0b7c3-0e87-4ccb-b4a7-18b587cfc101",
+      "version": 1,
+      "creation_reason": "INITIAL",
+      "status": "ACTIVE",
+      "suggestion_source": "HEURISTIC_FALLBACK",
+      "estimated_total_duration_seconds": 2700,
+      "minutes_ago": 40
+    }
+  ],
+  "route_steps": [
+    {
+      "id": "34dd5de2-6df3-4729-a37a-bdeea973a101",
+      "route_id": "27990ca9-5129-40b4-a444-e1e94e927101",
+      "visit_progress_id": "fe9441ba-50df-4d0c-9d73-a32b010a8102",
+      "step_order": 1,
+      "estimated_wait_seconds": 300,
+      "estimated_service_seconds": 240
+    },
+    {
+      "id": "34dd5de2-6df3-4729-a37a-bdeea973a102",
+      "route_id": "27990ca9-5129-40b4-a444-e1e94e927101",
+      "visit_progress_id": "fe9441ba-50df-4d0c-9d73-a32b010a8103",
+      "step_order": 2,
+      "estimated_wait_seconds": 600,
+      "estimated_service_seconds": 360
     }
   ]
 }
