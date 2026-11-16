@@ -31,6 +31,14 @@ class Visit(Base):
     progress_items = relationship("VisitProgress", back_populates="visit", cascade="all, delete-orphan")
     routes = relationship("Route", back_populates="visit", cascade="all, delete-orphan")
 
+    @property
+    def patient_name(self):
+        return self.patient.full_name if self.patient else None
+
+    @property
+    def package_name(self):
+        return self.package.name if self.package else None
+
 
 class VisitProgress(Base):
     """Tiến độ dịch vụ của lượt khám (Vòng đời: NOT_STARTED -> WAITING -> IN_PROGRESS -> COMPLETED).
@@ -56,6 +64,14 @@ class VisitProgress(Base):
     visit = relationship("Visit", back_populates="progress_items")
     exam_service = relationship("ExamService")
     service_point = relationship("ServicePoint")
+
+    @property
+    def service_name(self):
+        return self.exam_service.name if self.exam_service else None
+
+    @property
+    def service_point_name(self):
+        return self.service_point.name if self.service_point else None
 
     __table_args__ = (
         Index("idx_progress_service_status_queued", "service_point_id", "status", "queued_at"),

@@ -71,3 +71,52 @@ class AuthService:
 
         self.db.commit()
         return new_acc
+
+    def get_account_profile(self, account_id: str) -> dict:
+        account = self.repo.get_by_id(account_id)
+        if not account:
+            raise ResourceNotFound("Account", account_id)
+        res = {
+            "id": account.id,
+            "username": account.username,
+            "full_name": account.full_name,
+            "role": account.role,
+            "status": account.status,
+            "employee_code": account.employee_code,
+            "created_at": account.created_at,
+            "last_login_at": account.last_login_at,
+            "assigned_service_point_id": account.assigned_service_point_id,
+            "phone_number": None,
+            "email": None,
+            "specialty": None,
+            "license_number": None,
+        }
+        if account.staff_profile:
+            res["phone_number"] = account.staff_profile.phone_number
+            res["email"] = account.staff_profile.email
+            if account.staff_profile.doctor_profile:
+                res["specialty"] = account.staff_profile.doctor_profile.specialty
+                res["license_number"] = account.staff_profile.doctor_profile.license_number
+        elif account.patient_profile:
+            res["phone_number"] = account.patient_profile.phone_number
+            res["email"] = account.patient_profile.email
+        return res
+
+    def update_profile(self, account_id: str, full_name: Optional[str] = None, phone_number: Optional[str] = None, email: Optional[str] = None) -> dict:
+        account = self.repo.get_by_id(account_id)
+        if not account:
+            raise ResourceNotFound("Account", account_id)
+        if full_name:
+            account.full_name = full_name
+        if account.staff_profile:
+            if phone_number is not None:
+                account.staff_profile.phone_number = phone_number
+            if email is not None:
+                account.staff_profile.email = email
+        elif account.patient_profile:
+            if phone_number is not None:
+                account.patient_profile.phone_number = phone_number
+            if email is not None:
+                account.patient_profile.email = email
+        self.db.commit()
+        return self.get_account_profile(account_id)

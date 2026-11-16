@@ -1,6 +1,7 @@
 from typing import List, Optional
 from sqlalchemy.orm import Session
-from app.models.package import Package, PackageTier, ExamService, PackageServiceItem
+from app.models.package import Package, PackageTier, PackageServiceItem
+from app.models.service import ExamService
 from app.repositories.package_repository import PackageRepository
 from app.schemas.package import (
     PackageResponse,

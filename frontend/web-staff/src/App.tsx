@@ -4,7 +4,10 @@ import { Sidebar } from './components/Sidebar';
 import { MyServicePoint } from './pages/MyServicePoint';
 import { DoctorConsultation } from './pages/DoctorConsultation';
 import { Reception } from './pages/Reception';
+import { Appointments } from './pages/Appointments';
+import { AuthorizationPage } from './pages/Authorization';
 import { AdminOverview } from './pages/AdminOverview';
+import { ProfileModal } from './components/ProfileModal';
 import { Account, ServicePoint, ServicePointQueueSummary, ExamService, Package } from './types';
 import { useWebSocket } from './hooks/useWebSocket';
 
@@ -15,7 +18,11 @@ export const App: React.FC = () => {
     fullName: 'BS. CK1 Nguyễn Văn An',
     role: 'DOCTOR',
     employeeCode: 'NV-DOC-01',
-    assignedServicePointId: 'sp-02-internal'
+    assignedServicePointId: 'sp-02-internal',
+    specialty: 'Nội Tổng Quát',
+    licenseNumber: 'CCHN-00123/HCM',
+    phoneNumber: '0909123456',
+    email: 'bs.nguyenvanan@phongkham.vn'
   });
 
   const [currentTab, setCurrentTab] = useState<string>('my-service-point');
@@ -25,6 +32,7 @@ export const App: React.FC = () => {
   const [availableServices, setAvailableServices] = useState<ExamService[]>([]);
   const [packages, setPackages] = useState<Package[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [showProfileModal, setShowProfileModal] = useState<boolean>(false);
 
   // Lấy dữ liệu ban đầu từ REST API
   const fetchInitialData = useCallback(async () => {
@@ -182,6 +190,45 @@ export const App: React.FC = () => {
     setAllQueues(updated);
   };
 
+  // Chuyển đổi nhanh tài khoản mẫu
+  const handleSwitchAccount = (accountKey: 'doctor' | 'coordinator' | 'admin') => {
+    if (accountKey === 'doctor') {
+      setCurrentAccount({
+        id: 'acc-03-doctor',
+        username: 'doctor',
+        fullName: 'BS. CK1 Nguyễn Văn An',
+        role: 'DOCTOR',
+        employeeCode: 'NV-DOC-01',
+        assignedServicePointId: 'sp-02-internal',
+        specialty: 'Nội Tổng Quát',
+        licenseNumber: 'CCHN-00123/HCM',
+        phoneNumber: '0909123456',
+        email: 'bs.nguyenvanan@phongkham.vn'
+      });
+    } else if (accountKey === 'coordinator') {
+      setCurrentAccount({
+        id: 'acc-02-coord',
+        username: 'coordinator',
+        fullName: 'Nguyễn Thị Mai (Điều phối / Thư ký)',
+        role: 'COORDINATOR',
+        employeeCode: 'NV-SEC-01',
+        assignedServicePointId: 'sp-01-reception',
+        phoneNumber: '0912345678',
+        email: 'nguyenthimai@phongkham.vn'
+      });
+    } else {
+      setCurrentAccount({
+        id: 'acc-01-admin',
+        username: 'admin',
+        fullName: 'Quản Trị Viên Hệ Thống',
+        role: 'ADMIN',
+        employeeCode: 'NV-ADM-01',
+        phoneNumber: '0988888888',
+        email: 'admin@phongkham.vn'
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
       <Header
@@ -191,6 +238,7 @@ export const App: React.FC = () => {
         selectedServicePointId={selectedServicePointId}
         onSelectServicePoint={setSelectedServicePointId}
         isWsConnected={isConnected}
+        onOpenProfile={() => setShowProfileModal(true)}
       />
 
       <div className="flex flex-1">
@@ -210,6 +258,13 @@ export const App: React.FC = () => {
             />
           )}
 
+          {currentTab === 'reception' && (
+            <Reception
+              packages={packages}
+              onCreateVisit={handleCreateVisit}
+            />
+          )}
+
           {currentTab === 'doctor-consultation' && (
             <DoctorConsultation
               availableServices={availableServices}
@@ -217,10 +272,16 @@ export const App: React.FC = () => {
             />
           )}
 
-          {currentTab === 'reception' && (
-            <Reception
+          {currentTab === 'appointments' && (
+            <Appointments
               packages={packages}
-              onCreateVisit={handleCreateVisit}
+              onDirectCheckIn={handleCreateVisit}
+            />
+          )}
+
+          {currentTab === 'authorization' && (
+            <AuthorizationPage
+              currentAccount={currentAccount}
             />
           )}
 
@@ -229,6 +290,16 @@ export const App: React.FC = () => {
           )}
         </main>
       </div>
+
+      {/* Modal hồ sơ nhân viên */}
+      <ProfileModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        currentAccount={currentAccount}
+        servicePoints={servicePoints}
+        onAccountUpdate={(updated) => setCurrentAccount(updated)}
+        onSwitchAccount={handleSwitchAccount}
+      />
     </div>
   );
 };

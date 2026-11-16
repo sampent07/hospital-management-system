@@ -33,6 +33,10 @@ ROLE_PERMISSIONS = {
         "route:support_recalc",
         "route:proxy_decision",
         "account:view_profile",
+        "patient:manage",
+        "appointment:manage",
+        "authorization:accept",
+        "clinical:record_result",
     },
     "DOCTOR": {
         "visit:create",
@@ -49,6 +53,9 @@ ROLE_PERMISSIONS = {
         "clinical:prescribe",
         "clinical:conclude",
         "account:view_profile",
+        "patient:manage",
+        "appointment:manage",
+        "authorization:create",
     },
     "PATIENT": {
         "visit:self_view",

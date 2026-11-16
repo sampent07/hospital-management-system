@@ -30,6 +30,22 @@ class VisitRepository(BaseRepository[Visit]):
         count = self.db.query(Visit).count()
         return count + 1
 
+    def list_visits(self, status: Optional[str] = None, patient_id: Optional[str] = None, limit: int = 50) -> List[Visit]:
+        q = (
+            self.db.query(Visit)
+            .options(
+                joinedload(Visit.patient),
+                joinedload(Visit.package),
+                joinedload(Visit.progress_items).joinedload(VisitProgress.exam_service),
+                joinedload(Visit.progress_items).joinedload(VisitProgress.service_point)
+            )
+        )
+        if status:
+            q = q.filter(Visit.status == status)
+        if patient_id:
+            q = q.filter(Visit.patient_id == patient_id)
+        return q.order_by(Visit.check_in_at.desc()).limit(limit).all()
+
 
 class ProgressRepository(BaseRepository[VisitProgress]):
     def __init__(self, db: Session):

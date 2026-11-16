@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Users, Clock, Building2, CheckCircle2 } from 'lucide-react';
+import { Users, Clock, Building2, CheckCircle2 } from 'lucide-react';
 import { ServicePointQueueSummary } from '../types';
 import { formatDurationMinutes } from '../utils/formatTime';
 

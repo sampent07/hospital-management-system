@@ -29,6 +29,12 @@ class RegisterStaffRequest(BaseModel):
     email: Optional[str] = None
 
 
+class ProfileUpdateRequest(BaseModel):
+    full_name: Optional[str] = None
+    phone_number: Optional[str] = None
+    email: Optional[str] = None
+
+
 class AccountResponse(BaseModel):
     id: str
     username: str
@@ -39,6 +45,10 @@ class AccountResponse(BaseModel):
     created_at: datetime
     last_login_at: Optional[datetime] = None
     assigned_service_point_id: Optional[str] = None
+    phone_number: Optional[str] = None
+    email: Optional[str] = None
+    specialty: Optional[str] = None
+    license_number: Optional[str] = None
 
     class Config:
         from_attributes = True

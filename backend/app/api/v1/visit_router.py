@@ -15,6 +15,18 @@ from app.schemas.common import MessageResponse
 router = APIRouter(prefix="/visits", tags=["Lượt khám & Tiến độ dịch vụ"])
 
 
+@router.get("", response_model=List[VisitResponse], summary="Xem danh sách lượt khám")
+def list_visits(
+    status: Optional[str] = Query(None, description="Lọc theo trạng thái lượt khám"),
+    patient_id: Optional[str] = Query(None, description="Lọc theo ID bệnh nhân"),
+    limit: int = Query(50, ge=1, le=100),
+    payload: dict = Depends(get_current_user_payload),
+    db: Session = Depends(get_db)
+):
+    service = VisitService(db)
+    return service.visit_repo.list_visits(status=status, patient_id=patient_id, limit=limit)
+
+
 @router.post("", response_model=VisitResponse, summary="Tiếp nhận bệnh nhân / Tạo lượt khám mới")
 def create_visit(
     req: VisitCreateRequest,

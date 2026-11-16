@@ -2,6 +2,7 @@ import uuid
 from sqlalchemy import Column, String, Integer, Numeric, Text, Boolean, ForeignKey, JSON
 from sqlalchemy.orm import relationship
 from app.core.database import Base
+from app.models.service import ExamService
 
 
 def generate_uuid():

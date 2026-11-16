@@ -1,8 +1,8 @@
 from typing import Optional, List
 from sqlalchemy.orm import Session, joinedload
 from app.models.route import Route, RouteStep, RouteDecision
-from app.models.package import Package, PackageTier, ExamService, Constraint, StepConstraint
-from app.models.service import ServicePoint
+from app.models.package import Package, PackageTier, Constraint, StepConstraint
+from app.models.service import ServicePoint, ExamService
 from app.repositories.base import BaseRepository
 
 

@@ -9,6 +9,7 @@ interface HeaderProps {
   selectedServicePointId: string;
   onSelectServicePoint: (id: string) => void;
   isWsConnected: boolean;
+  onOpenProfile?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -18,6 +19,7 @@ export const Header: React.FC<HeaderProps> = ({
   selectedServicePointId,
   onSelectServicePoint,
   isWsConnected,
+  onOpenProfile,
 }) => {
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-30 px-6 py-3 flex items-center justify-between shadow-sm">
@@ -32,7 +34,7 @@ export const Header: React.FC<HeaderProps> = ({
               Vận Hành Phòng Khám
             </span>
           </h1>
-          <p className="text-xs text-slate-500">Giảm thiểu thời gian chờ & tối ưu lộ trình thông minh</p>
+          <p className="text-xs text-slate-500">Giảm thiểu thời gian chờ &amp; tối ưu lộ trình thông minh</p>
         </div>
       </div>
 
@@ -78,7 +80,14 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Hồ sơ nhân viên & Role switcher */}
         <div className="flex items-center gap-3 pl-3 border-l border-slate-200">
           <div className="text-right">
-            <div className="text-xs font-bold text-slate-800">{currentAccount.fullName}</div>
+            <button
+              type="button"
+              onClick={onOpenProfile}
+              className="text-xs font-bold text-slate-800 hover:text-primary-600 transition-colors block text-right"
+              title="Xem và chỉnh sửa hồ sơ nhân viên"
+            >
+              {currentAccount.fullName}
+            </button>
             <div className="text-[11px] text-slate-500 flex items-center justify-end gap-1">
               <span>Vai trò:</span>
               <select
@@ -92,9 +101,14 @@ export const Header: React.FC<HeaderProps> = ({
               </select>
             </div>
           </div>
-          <div className="w-9 h-9 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-sm border-2 border-white shadow-sm">
+          <button
+            type="button"
+            onClick={onOpenProfile}
+            className="w-9 h-9 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-700 flex items-center justify-center font-bold text-sm border-2 border-white shadow-sm transition-all"
+            title="Xem hồ sơ nhân viên"
+          >
             <User className="w-5 h-5 text-slate-600" />
-          </div>
+          </button>
         </div>
       </div>
     </header>
