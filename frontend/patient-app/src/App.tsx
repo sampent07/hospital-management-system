@@ -249,8 +249,8 @@ export const App: React.FC = () => {
     },
     {
       id: 'advisor' as const,
-      name: 'Gợi Ý Gói Khám',
-      desc: 'Khảo sát nhu cầu sức khỏe',
+      name: 'Đăng Ký Gói Khám',
+      desc: 'Khám cá nhân & doanh nghiệp',
       icon: Sparkles
     },
     {

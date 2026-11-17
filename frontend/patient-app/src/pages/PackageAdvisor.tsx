@@ -383,7 +383,7 @@ export const PackageAdvisor: React.FC<PackageAdvisorProps> = ({ onRegisterSucces
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
             <div className="flex items-center gap-2.5">
               <HelpCircle className="w-5 h-5 text-blue-600" />
-              <h3 className="text-base font-bold text-slate-900">Khảo Sát Nhu Cầu Khám Sức Khỏe</h3>
+              <h3 className="text-base font-bold text-slate-900">Đăng Ký Gói Khám Sức Khỏe</h3>
             </div>
 
             {/* 2 TAB CHUYỂN ĐỔI: KHÁM CÁ NHÂN HOẶC KHÁM DOANH NGHIỆP */}
@@ -689,6 +689,123 @@ export const PackageAdvisor: React.FC<PackageAdvisorProps> = ({ onRegisterSucces
             </div>
           </div>
         )}
+
+        {/* Ô NHỎ GÓC DƯỚI BÊN PHẢI: NƠI ĐỂ CHỌN GỢI Ý GÓI KHÁM */}
+        <div className="bg-white p-5 rounded-3xl border-2 border-blue-200 shadow-sm space-y-3.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide">
+                  Gợi Ý Gói Khám
+                </h4>
+                <p className="text-[11px] text-slate-400">Chọn nhanh các gói khám đề xuất</p>
+              </div>
+            </div>
+            <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-full">
+              Tư Vấn Nhanh
+            </span>
+          </div>
+
+          <p className="text-[11px] text-slate-500 leading-snug">
+            Bấm chọn một gói gợi ý dưới đây để hệ thống hiển thị chi tiết và đặt lịch ngay:
+          </p>
+
+          {/* Tab chọn nhanh đối tượng gợi ý: Cá Nhân hoặc Doanh Nghiệp */}
+          <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 rounded-2xl border border-slate-200">
+            <button
+              type="button"
+              onClick={() => {
+                setTargetType('INDIVIDUAL');
+                setRecommendedPackage(mockPackagesDatabase['male-general']);
+                setExplanationText('Gói khám định kỳ toàn diện tối ưu chi phí cho nam giới.');
+              }}
+              className={`py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                targetType === 'INDIVIDUAL'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <User className="w-3.5 h-3.5" />
+              <span>Gợi Ý Cá Nhân</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setTargetType('CORPORATE');
+                setRecommendedPackage(mockPackagesDatabase['corp-std']);
+                setExplanationText('Gói khám sức khỏe định kỳ doanh nghiệp chuẩn Thông tư 32/BYT.');
+              }}
+              className={`py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                targetType === 'CORPORATE'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Building2 className="w-3.5 h-3.5" />
+              <span>Gợi Ý Doanh Nghiệp</span>
+            </button>
+          </div>
+
+          {/* Danh sách 3 gói gợi ý theo đối tượng */}
+          <div className="space-y-2">
+            {(targetType === 'INDIVIDUAL'
+              ? [
+                  mockPackagesDatabase['male-general'],
+                  mockPackagesDatabase['female-general'],
+                  mockPackagesDatabase['senior-comprehensive']
+                ]
+              : [
+                  mockPackagesDatabase['corp-std'],
+                  mockPackagesDatabase['corp-office'],
+                  mockPackagesDatabase['corp-vip']
+                ]
+            ).map((item) => {
+              const isSelected = recommendedPackage?.id === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    setRecommendedPackage(item);
+                    setExplanationText(item.description);
+                  }}
+                  className={`w-full p-2.5 rounded-2xl border text-left transition-all flex items-center justify-between group cursor-pointer ${
+                    isSelected
+                      ? 'border-blue-500 bg-blue-50/70 shadow-sm ring-1 ring-blue-200'
+                      : 'border-slate-200 hover:border-blue-300 bg-slate-50/60 hover:bg-blue-50/30'
+                  }`}
+                >
+                  <div className="space-y-0.5 min-w-0 pr-2">
+                    <div className="text-xs font-bold text-slate-800 group-hover:text-blue-700 transition-colors line-clamp-1">
+                      {item.name}
+                    </div>
+                    <div className="text-[11px] text-blue-600 font-semibold">
+                      {item.basePrice.toLocaleString('vi-VN')} VNĐ {item.priceUnitText}
+                    </div>
+                  </div>
+
+                  <div className="shrink-0">
+                    {isSelected ? (
+                      <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">
+                        ✓
+                      </span>
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-600 group-hover:translate-x-0.5 transition-all" />
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+            <span>Áp dụng quy tắc y tế tự động</span>
+            <span className="text-blue-600 font-medium">Bấm chọn để xem</span>
+          </div>
+        </div>
       </div>
 
       {/* MODAL 1: XEM CHI TIẾT GÓI KHÁM */}
