@@ -11,6 +11,21 @@ interface QueueItem {
   estimatedWaitSeconds: number;
 }
 
+interface ApiQueueResponse {
+  servicePointId?: string;
+  service_point_id?: string;
+  servicePointCode?: string;
+  service_point_code?: string;
+  servicePointName?: string;
+  service_point_name?: string;
+  roomNumber?: string;
+  room_number?: string;
+  waitingCount?: number;
+  waiting_count?: number;
+  estimatedWaitSeconds?: number;
+  estimated_wait_seconds?: number;
+}
+
 const defaultQueues: QueueItem[] = [
   { servicePointId: 'sp-01', servicePointCode: 'SP-RECEPTION', servicePointName: 'Quầy Tiếp Đón & Lễ Tân', roomNumber: 'Sảnh Tầng 1', waitingCount: 2, estimatedWaitSeconds: 120 },
   { servicePointId: 'sp-02', servicePointCode: 'SP-INTERNAL-01', servicePointName: 'Phòng Khám Nội Tổng Quát', roomNumber: 'Phòng 101', waitingCount: 5, estimatedWaitSeconds: 900 },
@@ -18,6 +33,9 @@ const defaultQueues: QueueItem[] = [
   { servicePointId: 'sp-04', servicePointCode: 'SP-LAB-BLOOD', servicePointName: 'Phòng Lấy Mẫu Xét Nghiệm Máu', roomNumber: 'Phòng XN-02', waitingCount: 4, estimatedWaitSeconds: 480 },
   { servicePointId: 'sp-05', servicePointCode: 'SP-XRAY', servicePointName: 'Phòng Chụp X-Quang Ngực', roomNumber: 'Phòng CĐHA-01', waitingCount: 1, estimatedWaitSeconds: 180 },
   { servicePointId: 'sp-06', servicePointCode: 'SP-ULTRASOUND', servicePointName: 'Phòng Siêu Âm Tổng Quát', roomNumber: 'Phòng CĐHA-03', waitingCount: 6, estimatedWaitSeconds: 1200 },
+  { servicePointId: 'sp-07', servicePointCode: 'SP-ENT', servicePointName: 'Phòng Khám Tai Mũi Họng', roomNumber: 'Phòng 103', waitingCount: 2, estimatedWaitSeconds: 240 },
+  { servicePointId: 'sp-08', servicePointCode: 'SP-EYE', servicePointName: 'Phòng Khám Chuyên Khoa Mắt', roomNumber: 'Phòng 104', waitingCount: 4, estimatedWaitSeconds: 480 },
+  { servicePointId: 'sp-09', servicePointCode: 'SP-ECG', servicePointName: 'Phòng Đo Điện Tim (ECG) & TDCN', roomNumber: 'Phòng TDCN-01', waitingCount: 1, estimatedWaitSeconds: 180 },
 ];
 
 export const QueueBoard: React.FC = () => {
@@ -27,9 +45,17 @@ export const QueueBoard: React.FC = () => {
   useEffect(() => {
     fetch('/api/v1/queues')
       .then((r) => (r.ok ? r.json() : []))
-      .then((data: QueueItem[]) => {
+      .then((data: ApiQueueResponse[]) => {
         if (Array.isArray(data) && data.length > 0) {
-          setQueues(data);
+          const mapped: QueueItem[] = data.map((d) => ({
+            servicePointId: d.servicePointId || d.service_point_id || '',
+            servicePointCode: d.servicePointCode || d.service_point_code || '',
+            servicePointName: d.servicePointName || d.service_point_name || '',
+            roomNumber: d.roomNumber || d.room_number || '',
+            waitingCount: d.waitingCount ?? d.waiting_count ?? 0,
+            estimatedWaitSeconds: d.estimatedWaitSeconds ?? d.estimated_wait_seconds ?? 0,
+          }));
+          setQueues(mapped);
         }
         setIsLoading(false);
       })
