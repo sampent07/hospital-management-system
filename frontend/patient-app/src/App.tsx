@@ -1,12 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Route as RouteIcon, Sparkles, Users, Activity, User, PhoneCall, ShieldCheck, ChevronRight, RotateCw, X, CheckCircle2 } from 'lucide-react';
+import { Route as RouteIcon, Sparkles, Users, Activity, User, PhoneCall, ShieldCheck, ChevronRight, RotateCw, X, CheckCircle2, LogOut } from 'lucide-react';
 import { LiveJourney } from './pages/LiveJourney';
 import { PackageAdvisor } from './pages/PackageAdvisor';
 import { QueueBoard } from './pages/QueueBoard';
+import { Login } from './pages/Login';
 import { RouteDecisionModal } from './components/RouteDecisionModal';
-import { Route } from './types';
+import { PatientUser, Route } from './types';
 
 export const App: React.FC = () => {
+  const [currentUser, setCurrentUser] = useState<PatientUser | null>(() => {
+    try {
+      const saved = localStorage.getItem('smart_opd_patient_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
   const [activeTab, setActiveTab] = useState<'journey' | 'advisor' | 'queues'>('journey');
   const [currentRoute, setCurrentRoute] = useState<Route | null>(null);
   const [proposedRoute, setProposedRoute] = useState<Route | null>(null);
@@ -18,8 +28,26 @@ export const App: React.FC = () => {
     setToastNotice({ title, message });
   };
 
-  // Mẫu lượt khám ban đầu để demo mượt mà
-  const visitId = 'VK-20261111-001';
+  const handleLoginSuccess = (user: PatientUser) => {
+    setCurrentUser(user);
+    try {
+      localStorage.setItem('smart_opd_patient_user', JSON.stringify(user));
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    try {
+      localStorage.removeItem('smart_opd_patient_user');
+    } catch {
+      // ignore
+    }
+  };
+
+  // Mẫu lượt khám của bệnh nhân đăng nhập
+  const visitId = currentUser?.visitId || 'VK-20261111-001';
 
   // Tự động đóng thông báo sau 3 giây
   useEffect(() => {
@@ -82,7 +110,7 @@ export const App: React.FC = () => {
       ]
     };
     setCurrentRoute(mockRoute);
-  }, []);
+  }, [visitId]);
 
   // Yêu cầu tính lại lộ trình
   const handleRecalculate = async () => {
@@ -233,6 +261,10 @@ export const App: React.FC = () => {
     }
   ];
 
+  if (!currentUser) {
+    return <Login onLoginSuccess={handleLoginSuccess} />;
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
       {/* Top Header */}
@@ -247,16 +279,26 @@ export const App: React.FC = () => {
           </div>
         </div>
 
-        {/* Thông tin nhanh bệnh nhân trên Header */}
+        {/* Thông tin nhanh bệnh nhân trên Header & Đăng Xuất */}
         <div className="flex items-center gap-3">
           <div className="text-right hidden sm:block">
-            <div className="text-xs font-bold text-slate-800">Lê Văn Hùng</div>
-            <div className="text-[11px] text-slate-500 font-mono">Mã BN: BN-20261111 • Nam, 38 tuổi</div>
+            <div className="text-xs font-bold text-slate-800">{currentUser.fullName}</div>
+            <div className="text-[11px] text-slate-500 font-mono">
+              Mã BN: {currentUser.patientCode} • {currentUser.gender}, {currentUser.age} tuổi
+            </div>
           </div>
           <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-2xl px-3 py-1.5 shadow-sm">
             <span className="text-[11px] font-semibold text-blue-700">STT Khám:</span>
-            <span className="text-sm font-black text-blue-900">#001</span>
+            <span className="text-sm font-black text-blue-900">{currentUser.queueNumber}</span>
           </div>
+          <button
+            onClick={handleLogout}
+            title="Đăng xuất tài khoản"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-rose-600 bg-slate-100 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 rounded-2xl transition-all cursor-pointer"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span className="hidden md:inline">Đăng Xuất</span>
+          </button>
         </div>
       </header>
 
@@ -354,7 +396,7 @@ export const App: React.FC = () => {
               </div>
               <div>
                 <div className="text-xs text-slate-400 font-medium">Hồ Sơ Bệnh Nhân</div>
-                <div className="text-sm font-bold text-slate-800">Lê Văn Hùng</div>
+                <div className="text-sm font-bold text-slate-800">{currentUser.fullName}</div>
               </div>
             </div>
 
@@ -396,6 +438,7 @@ export const App: React.FC = () => {
           {activeTab === 'journey' && (
             <LiveJourney
               currentRoute={currentRoute}
+              queueNumber={currentUser.queueNumber}
             />
           )}
           {activeTab === 'advisor' && (

@@ -36,3 +36,14 @@ export interface PackageAdvisorResult {
   explanation: string;
   warning_disclaimer: string;
 }
+
+export interface PatientUser {
+  id: string;
+  username: string;
+  fullName: string;
+  patientCode: string;
+  visitId: string;
+  queueNumber: string;
+  gender: string;
+  age: number;
+}

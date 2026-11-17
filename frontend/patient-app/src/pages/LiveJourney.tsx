@@ -5,10 +5,12 @@ import { formatDurationMinutes } from '../utils/formatTime';
 
 interface LiveJourneyProps {
   currentRoute: Route | null;
+  queueNumber?: string;
 }
 
 export const LiveJourney: React.FC<LiveJourneyProps> = ({
   currentRoute,
+  queueNumber,
 }) => {
   if (!currentRoute || currentRoute.steps.length === 0) {
     return (
@@ -186,7 +188,7 @@ export const LiveJourney: React.FC<LiveJourneyProps> = ({
               Hướng Dẫn Khi Đến Phòng:
             </div>
             <p className="text-[11px] text-blue-800 leading-relaxed">
-              Bạn hãy di chuyển đến cửa phòng <strong>{activeStep.roomNumber || activeStep.servicePointName}</strong>, ngồi tại hàng ghế chờ và chú ý màn hình gọi số thứ tự <strong>#001</strong>.
+              Bạn hãy di chuyển đến cửa phòng <strong>{activeStep.roomNumber || activeStep.servicePointName}</strong>, ngồi tại hàng ghế chờ và chú ý màn hình gọi số thứ tự <strong>{queueNumber || '#001'}</strong>.
             </p>
           </div>
         </div>
