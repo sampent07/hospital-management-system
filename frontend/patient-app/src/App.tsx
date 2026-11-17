@@ -443,9 +443,9 @@ export const App: React.FC = () => {
           )}
           {activeTab === 'advisor' && (
             <PackageAdvisor
-              onRegisterSuccess={(pkgName) =>
+              onRegisterSuccess={(info) =>
                 showToast(
-                  `Đã ghi nhận yêu cầu đăng ký "${pkgName}". Vui lòng đến Quầy Lễ Tân (Tầng 1) để nhận số thứ tự và hoàn tất thủ tục.`,
+                  `Đã đặt lịch "${info.packageName}" tại ${info.facilityName} (${info.timeSlot}, ngày ${info.appointmentDate}). Mã lịch khám: #${info.bookingCode}`,
                   'Đăng Ký Thành Công'
                 )
               }
