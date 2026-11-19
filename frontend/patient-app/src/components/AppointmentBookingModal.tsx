@@ -1,13 +1,29 @@
 import React, { useState } from 'react';
-import { X, Clock, MapPin, CheckCircle2, AlertCircle, Info, CalendarCheck } from 'lucide-react';
-import { PackageDetail, BookingAppointment } from '../types';
+import { X, Clock, MapPin, CheckCircle2, AlertCircle, Info, CalendarCheck, User, Building2, ShieldCheck, HeartPulse, Stethoscope } from 'lucide-react';
+import { PackageDetail, BookingAppointment, SingleServiceItem } from '../types';
+
+export interface RegistrationInfo {
+  contactName: string;
+  contactPhone: string;
+  age?: number;
+  gender?: string;
+  insuranceCardNumber?: string;
+  medicalHistory?: string;
+  companyName?: string;
+  employeeScale?: string;
+  workEnvironment?: string;
+  email?: string;
+  notes?: string;
+}
 
 interface AppointmentBookingModalProps {
   packageData: PackageDetail | null;
   isOpen: boolean;
   onClose: () => void;
   onConfirmBooking: (booking: BookingAppointment) => void;
-  initialContactName?: string;
+  registrationInfo: RegistrationInfo;
+  examMode?: 'PACKAGE' | 'SINGLE';
+  selectedServices?: SingleServiceItem[];
 }
 
 export const AppointmentBookingModal: React.FC<AppointmentBookingModalProps> = ({
@@ -15,10 +31,12 @@ export const AppointmentBookingModal: React.FC<AppointmentBookingModalProps> = (
   isOpen,
   onClose,
   onConfirmBooking,
-  initialContactName = 'Lê Văn Hùng',
+  registrationInfo,
+  examMode = 'PACKAGE',
+  selectedServices = [],
 }) => {
   const [facility, setFacility] = useState<'CS1' | 'CS2'>('CS1');
-  
+
   // Mặc định chọn ngày mai
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -26,16 +44,14 @@ export const AppointmentBookingModal: React.FC<AppointmentBookingModalProps> = (
 
   const [appointmentDate, setAppointmentDate] = useState<string>(defaultDateStr);
   const [timeSlot, setTimeSlot] = useState<string>('08:30 - 10:00');
-  const [contactName, setContactName] = useState<string>(initialContactName);
-  const [contactPhone, setContactPhone] = useState<string>('0909 123 456');
-  const [companyName, setCompanyName] = useState<string>('Công ty Cổ phần Công nghệ Smart OPD');
-  const [estimatedEmployees, setEstimatedEmployees] = useState<string>('50 - 200 nhân sự');
-  const [notes, setNotes] = useState<string>('');
   const [errorNotice, setErrorNotice] = useState<string | null>(null);
 
-  if (!isOpen || !packageData) return null;
+  if (!isOpen) return null;
 
-  const isCorporate = packageData.targetType === 'CORPORATE';
+  const isSingle = examMode === 'SINGLE';
+  const isCorporate = !isSingle && packageData?.targetType === 'CORPORATE';
+
+  const singleTotalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
 
   // Kiểm tra nếu chọn ngày rơi vào Thứ 7 hoặc Chủ Nhật
   const selectedDay = new Date(appointmentDate).getDay(); // 0: Chủ Nhật, 6: Thứ 7
@@ -70,19 +86,29 @@ export const AppointmentBookingModal: React.FC<AppointmentBookingModalProps> = (
     };
 
     const newBooking: BookingAppointment = {
-      packageId: packageData.id,
-      packageName: packageData.name,
-      targetType: packageData.targetType,
+      packageId: isSingle ? undefined : packageData?.id,
+      packageName: isSingle
+        ? `Khám Lẻ (${selectedServices.length} dịch vụ)`
+        : packageData?.name || 'Gói Khám Sức Khỏe',
+      targetType: isCorporate ? 'CORPORATE' : 'INDIVIDUAL',
+      examMode: examMode,
+      selectedServices: isSingle ? selectedServices : undefined,
+      totalPrice: isSingle ? singleTotalPrice : packageData?.basePrice,
       facilityId: facility,
       facilityName: facilityDetails[facility].name,
       facilityAddress: facilityDetails[facility].address,
       appointmentDate,
       timeSlot,
-      contactName,
-      contactPhone,
-      companyName: isCorporate ? companyName : undefined,
-      estimatedEmployees: isCorporate ? estimatedEmployees : undefined,
-      notes: notes.trim() || undefined,
+      contactName: registrationInfo.contactName,
+      contactPhone: registrationInfo.contactPhone,
+      patientAge: registrationInfo.age,
+      patientGender: registrationInfo.gender,
+      insuranceCardNumber: registrationInfo.insuranceCardNumber,
+      medicalHistory: registrationInfo.medicalHistory,
+      companyName: isCorporate ? registrationInfo.companyName : undefined,
+      estimatedEmployees: isCorporate ? registrationInfo.employeeScale : undefined,
+      email: registrationInfo.email,
+      notes: registrationInfo.notes,
       bookingCode: `DK-${Math.floor(100000 + Math.random() * 900000)}`
     };
 
@@ -99,15 +125,25 @@ export const AppointmentBookingModal: React.FC<AppointmentBookingModalProps> = (
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
                 <CalendarCheck className="w-3 h-3" />
-                Đăng Ký Khám Bệnh
+                {isSingle ? 'Đặt Lịch Khám Lẻ' : 'Đặt Lịch Khám Bệnh'}
               </span>
-              <span className="text-xs text-slate-500 font-medium">{packageData.code}</span>
+              <span className="text-xs text-slate-500 font-medium">
+                {isSingle ? `${selectedServices.length} dịch vụ đã chọn` : packageData?.code}
+              </span>
             </div>
             <h3 className="text-base sm:text-lg font-extrabold text-slate-900 mt-1">
               Chọn Cơ Sở & Thời Gian Khám
             </h3>
             <p className="text-xs text-slate-500 line-clamp-1">
-              Gói khám: <strong className="text-blue-700">{packageData.name}</strong>
+              {isSingle ? (
+                <span>
+                  Tổng chi phí: <strong className="text-blue-700">{singleTotalPrice.toLocaleString('vi-VN')} VNĐ</strong>
+                </span>
+              ) : (
+                <span>
+                  Gói khám: <strong className="text-blue-700">{packageData?.name}</strong>
+                </span>
+              )}
             </p>
           </div>
 
@@ -284,98 +320,119 @@ export const AppointmentBookingModal: React.FC<AppointmentBookingModalProps> = (
             </div>
           </div>
 
-          {/* 4. THÔNG TIN LIÊN HỆ ĐĂNG KÝ */}
-          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
-            <div className="font-bold text-slate-800 text-xs">
-              {isCorporate ? 'Thông Tin Đại Diện Doanh Nghiệp' : 'Thông Tin Bệnh Nhân Đăng Ký'}
+          {/* 4. TÓM TẮT THÔNG TIN ĐÃ ĐĂNG KÝ (KHÔNG CẦN NHẬP LẠI) */}
+          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2.5">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+              <span className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                {isCorporate ? <Building2 className="w-4 h-4 text-blue-600" /> : <User className="w-4 h-4 text-blue-600" />}
+                <span>{isCorporate ? 'Thông Tin Doanh Nghiệp Đăng Ký' : 'Thông Tin Người Khám Đăng Ký'}</span>
+              </span>
+              <span className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-semibold">
+                ✓ Đã lưu từ bước đăng ký
+              </span>
             </div>
 
-            {isCorporate ? (
-              <div className="space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-[11px] font-medium text-slate-600 block mb-1">Tên Doanh Nghiệp</label>
-                    <input
-                      type="text"
-                      value={companyName}
-                      onChange={(e) => setCompanyName(e.target.value)}
-                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-900 outline-none focus:border-blue-500"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-medium text-slate-600 block mb-1">Quy Mô Nhân Sự</label>
-                    <select
-                      value={estimatedEmployees}
-                      onChange={(e) => setEstimatedEmployees(e.target.value)}
-                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-900 outline-none focus:border-blue-500"
-                    >
-                      <option value="Dưới 50 nhân sự">Dưới 50 nhân sự</option>
-                      <option value="50 - 200 nhân sự">50 - 200 nhân sự</option>
-                      <option value="200 - 500 nhân sự">200 - 500 nhân sự</option>
-                      <option value="Trên 500 nhân sự">Trên 500 nhân sự</option>
-                    </select>
-                  </div>
+            {/* Nếu là Khám Lẻ: Liệt kê các dịch vụ đã chọn */}
+            {isSingle && selectedServices.length > 0 && (
+              <div className="p-3 bg-white rounded-xl border border-blue-100 space-y-2">
+                <div className="flex items-center justify-between font-bold text-xs text-slate-900">
+                  <span className="flex items-center gap-1 text-blue-700">
+                    <Stethoscope className="w-3.5 h-3.5" />
+                    <span>Dịch vụ khám lẻ đã chọn ({selectedServices.length}):</span>
+                  </span>
+                  <span className="text-blue-600 font-black">{singleTotalPrice.toLocaleString('vi-VN')} VNĐ</span>
                 </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-[11px] font-medium text-slate-600 block mb-1">Người Liên Hệ (HR / Quản lý)</label>
-                    <input
-                      type="text"
-                      value={contactName}
-                      onChange={(e) => setContactName(e.target.value)}
-                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-900 outline-none focus:border-blue-500"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-medium text-slate-600 block mb-1">Số Điện Thoại</label>
-                    <input
-                      type="tel"
-                      value={contactPhone}
-                      onChange={(e) => setContactPhone(e.target.value)}
-                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-900 outline-none focus:border-blue-500"
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[11px] font-medium text-slate-600 block mb-1">Họ và Tên Bệnh Nhân</label>
-                  <input
-                    type="text"
-                    value={contactName}
-                    onChange={(e) => setContactName(e.target.value)}
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-900 outline-none focus:border-blue-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="text-[11px] font-medium text-slate-600 block mb-1">Số Điện Thoại Liên Hệ</label>
-                  <input
-                    type="tel"
-                    value={contactPhone}
-                    onChange={(e) => setContactPhone(e.target.value)}
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-900 outline-none focus:border-blue-500"
-                    required
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1">
+                  {selectedServices.map((srv) => (
+                    <div key={srv.id} className="p-2 bg-slate-50 rounded-lg flex items-center justify-between text-[11px]">
+                      <div className="flex items-center gap-1.5 min-w-0 pr-2">
+                        {(srv.categoryName || srv.category) && (
+                          <span className="text-[9px] font-bold bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded shrink-0">
+                            {srv.categoryName || srv.category}
+                          </span>
+                        )}
+                        <span className="font-medium text-slate-700 truncate">{srv.name}</span>
+                      </div>
+                      <span className="font-bold text-slate-900 shrink-0">{srv.price.toLocaleString('vi-VN')} đ</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
 
-            <div>
-              <label className="text-[11px] font-medium text-slate-600 block mb-1">Ghi Chú Y Khoa / Yêu Cầu Riêng (nếu có)</label>
-              <input
-                type="text"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Ví dụ: Cần hỗ trợ xe lăn, khám theo đoàn, hoặc có tiền sử tim mạch..."
-                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 outline-none focus:border-blue-500"
-              />
-            </div>
+            {isCorporate ? (
+              <div className="space-y-1.5 text-xs text-slate-600">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Tên Doanh Nghiệp:</span>
+                  <strong className="text-slate-800">{registrationInfo.companyName}</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Người Liên Hệ (HR):</span>
+                  <span className="text-slate-800 font-medium">{registrationInfo.contactName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Số Điện Thoại:</span>
+                  <span className="text-blue-700 font-semibold">{registrationInfo.contactPhone}</span>
+                </div>
+                {registrationInfo.email && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Email:</span>
+                    <span className="text-slate-700">{registrationInfo.email}</span>
+                  </div>
+                )}
+                {registrationInfo.employeeScale && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Quy Mô Nhân Sự:</span>
+                    <span className="text-slate-700">{registrationInfo.employeeScale}</span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-1.5 text-xs text-slate-600">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Hình Thức Khám:</span>
+                  <strong className="text-blue-700">{isSingle ? 'Khám Lẻ Từng Dịch Vụ' : 'Khám Theo Gói'}</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Họ và Tên Người Khám:</span>
+                  <strong className="text-slate-800">{registrationInfo.contactName}</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Độ Tuổi & Giới Tính:</span>
+                  <span className="text-slate-800 font-medium">
+                    {registrationInfo.age} tuổi • {registrationInfo.gender === 'FEMALE' ? 'Nữ' : 'Nam'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Số Điện Thoại:</span>
+                  <span className="text-blue-700 font-semibold">{registrationInfo.contactPhone}</span>
+                </div>
+                {registrationInfo.insuranceCardNumber && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400 flex items-center gap-1">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                      Mã BHYT / CCCD:
+                    </span>
+                    <span className="font-mono font-bold text-slate-800">{registrationInfo.insuranceCardNumber}</span>
+                  </div>
+                )}
+                {registrationInfo.medicalHistory && (
+                  <div className="flex justify-between items-start gap-2 pt-1 border-t border-slate-100">
+                    <span className="text-slate-400 shrink-0 flex items-center gap-1">
+                      <HeartPulse className="w-3.5 h-3.5 text-rose-500" />
+                      Tiền Sử Bệnh Lý:
+                    </span>
+                    <span className="text-slate-800 text-right font-medium">{registrationInfo.medicalHistory}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {registrationInfo.notes && (
+              <div className="pt-1.5 border-t border-slate-100 text-[11px] text-slate-500">
+                <span className="text-slate-400">Ghi chú:</span> {registrationInfo.notes}
+              </div>
+            )}
           </div>
 
           {/* Footer nút xác nhận */}

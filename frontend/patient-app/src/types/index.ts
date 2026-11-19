@@ -48,6 +48,20 @@ export interface PatientUser {
   age: number;
 }
 
+export interface PatientProfile {
+  fullName: string;
+  phone: string;
+  age: number;
+  gender: string;
+  insuranceCard: string;
+  idCardNumber?: string;
+  selectedDiseases: string[];
+  medicalHistoryDetail: string;
+  maritalStatus: string;
+  address?: string;
+  personalNotes?: string;
+}
+
 export interface PackageDetail {
   id: string;
   code: string;
@@ -65,10 +79,34 @@ export interface PackageDetail {
   benefits: string[];
 }
 
+export interface SingleServiceItem {
+  id: string;
+  code: string;
+  name: string;
+  category: string;
+  categoryId?: string;
+  categoryName?: string;
+  roomNumber: string;
+  price: number;
+  estimatedMinutes: number;
+  preparationNote?: string;
+}
+
+export interface ServiceCategoryGroup {
+  id: string;
+  name: string;
+  shortName: string;
+  icon: string;
+  description: string;
+}
+
 export interface BookingAppointment {
-  packageId: string;
+  packageId?: string;
   packageName: string;
   targetType: 'INDIVIDUAL' | 'CORPORATE';
+  examMode?: 'PACKAGE' | 'SINGLE';
+  selectedServices?: SingleServiceItem[];
+  totalPrice?: number;
   facilityId: 'CS1' | 'CS2';
   facilityName: string;
   facilityAddress: string;
@@ -76,8 +114,69 @@ export interface BookingAppointment {
   timeSlot: string;
   contactName: string;
   contactPhone: string;
+  relationship?: string;
+  patientAge?: number;
+  patientGender?: string;
+  insuranceCardNumber?: string;
+  medicalHistory?: string;
   companyName?: string;
   estimatedEmployees?: string;
+  email?: string;
   notes?: string;
   bookingCode: string;
+  status?: 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
+  resultRecordCode?: string;
+}
+
+export interface ServiceResultDetail {
+  name: string;
+  category: string;
+  roomNumber: string;
+  resultValue: string;
+  normalRange?: string;
+  unit?: string;
+  status: 'NORMAL' | 'ABNORMAL' | 'ATTENTION';
+  doctorNote?: string;
+}
+
+export interface MedicalExamRecord {
+  id: string;
+  recordCode: string; // ví dụ: "HSBA-20261015-88"
+  examDate: string; // Ngày, tháng khám: "15/10/2026"
+  examType: 'PACKAGE' | 'SINGLE';
+  packageName: string; // Tên gói hoặc dịch vụ khám
+  doctorName: string; // Bác sĩ phụ trách kết luận
+  department: string;
+  diagnosis: string; // Chẩn đoán của đợt khám
+  generalConclusion: string; // Kết luận tổng quát
+  serviceResults: ServiceResultDetail[]; // Kết quả chi tiết từng dịch vụ
+  prescription?: Array<{
+    drugName: string;
+    dosage: string;
+    usage: string;
+    quantity: string;
+  }>;
+  doctorAdvice: string; // Lời dặn của bác sĩ
+  followUpRecommendation?: string; // Khuyến cáo tái khám từ bác sĩ
+}
+
+export interface DoctorFollowUpAppointment {
+  id: string;
+  appointmentCode: string; // ví dụ: "TH-20261125-0101"
+  appointmentDate: string; // ví dụ: "25/11/2026"
+  appointmentTime: string; // ví dụ: "08:30"
+  dayOfWeek: string; // ví dụ: "Thứ Hai"
+  doctorName: string; // ví dụ: "BSCKII. Trần Hoàng Nam"
+  doctorTitle: string; // ví dụ: "Trưởng khoa Nội Tiêu Hóa"
+  department: string; // ví dụ: "Khoa Nội Tiêu Hóa"
+  roomNumber: string; // ví dụ: "Phòng 101 - Tầng 1"
+  facilityName: string; // ví dụ: "Bệnh viện Đa Khoa Smart OPD (Cơ sở 1)"
+  facilityAddress: string;
+  purpose: string; // Mục đích tái khám bác sĩ chỉ định
+  originalExamDate: string; // Đợt khám gốc liên quan
+  originalRecordCode: string;
+  preparationInstructions: string[]; // Bác sĩ dặn dò chuẩn bị trước khi đến
+  status: 'UPCOMING' | 'COMPLETED' | 'CANCELLED';
+  isDoctorAssignedOnly: boolean; // Chỉ bác sĩ đặt, bệnh nhân không tự đặt được
+  notes?: string;
 }

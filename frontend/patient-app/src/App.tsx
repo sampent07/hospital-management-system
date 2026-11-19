@@ -1,11 +1,51 @@
 import React, { useState, useEffect } from 'react';
-import { Route as RouteIcon, Sparkles, Users, Activity, User, PhoneCall, ShieldCheck, ChevronRight, RotateCw, X, CheckCircle2, LogOut } from 'lucide-react';
-import { LiveJourney } from './pages/LiveJourney';
+import {
+  UserCircle,
+  Layers,
+  Sparkles,
+  Users,
+  Activity,
+  ChevronRight,
+  RotateCw,
+  X,
+  CheckCircle2,
+  LogOut,
+  FileText,
+  CalendarClock
+} from 'lucide-react';
 import { PackageAdvisor } from './pages/PackageAdvisor';
 import { QueueBoard } from './pages/QueueBoard';
 import { Login } from './pages/Login';
 import { RouteDecisionModal } from './components/RouteDecisionModal';
-import { PatientUser, Route } from './types';
+import { RegisteredPackagesView } from './components/RegisteredPackagesView';
+import { PatientProfileView } from './components/PatientProfileView';
+import { MedicalResultsView } from './components/MedicalResultsView';
+import { FollowUpAppointmentsView } from './components/FollowUpAppointmentsView';
+import { buildRouteForBooking } from './utils/routeGenerator';
+import { PatientUser, Route, BookingAppointment, PatientProfile } from './types';
+
+export const pastCompletedBooking: BookingAppointment = {
+  packageId: 'pkg-digestive-general',
+  packageName: 'Gói Khám Tổng Quát Định Kỳ & Chuyên Sâu Tiêu Hóa',
+  targetType: 'INDIVIDUAL',
+  examMode: 'PACKAGE',
+  totalPrice: 2450000,
+  facilityId: 'CS1',
+  facilityName: 'Bệnh viện Đa Khoa Smart OPD (Cơ sở 1 - Quận 5)',
+  facilityAddress: 'Số 215 Hồng Bàng, Phường 11, Quận 5, TP. Hồ Chí Minh',
+  appointmentDate: '2026-10-15',
+  timeSlot: '07:30 - 10:30',
+  contactName: 'Lê Văn Hùng',
+  contactPhone: '0909 123 456',
+  patientAge: 38,
+  patientGender: 'Nam',
+  insuranceCardNumber: 'DN 4 79 20261111',
+  medicalHistory: 'Tăng huyết áp; Đau dạ dày / Tiêu hóa',
+  bookingCode: 'DK-20261015-88',
+  status: 'COMPLETED',
+  resultRecordCode: 'HSBA-20261015-88',
+  notes: 'Đã hoàn tất 8/8 dịch vụ. Bác sĩ kết luận viêm trợt hang vị HP (+) và kê đơn thuốc 14 ngày.'
+};
 
 export const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<PatientUser | null>(() => {
@@ -17,14 +57,66 @@ export const App: React.FC = () => {
     }
   });
 
-  const [activeTab, setActiveTab] = useState<'journey' | 'advisor' | 'queues'>('journey');
+  // Hồ sơ cá nhân của bệnh nhân (Lưu vào localStorage để dùng tự động đồng bộ khi đăng ký khám)
+  const [patientProfile, setPatientProfile] = useState<PatientProfile>(() => {
+    try {
+      const saved = localStorage.getItem('smart_opd_patient_profile');
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // ignore
+    }
+    return {
+      fullName: currentUser?.fullName || 'Lê Văn Hùng',
+      phone: '0909 123 456',
+      age: currentUser?.age || 38,
+      gender: currentUser?.gender === 'Nữ' ? 'FEMALE' : 'MALE',
+      insuranceCard: 'DN 4 79 20261111',
+      idCardNumber: '079088012345',
+      selectedDiseases: [],
+      medicalHistoryDetail: '',
+      maritalStatus: 'MARRIED',
+      address: 'Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh',
+      personalNotes: ''
+    };
+  });
+
+  // Tab đang hoạt động: 'profile' (Hồ Sơ Cá Nhân), 'packages' (Các Gói Khám Đã Đăng Ký), 'advisor' (Đăng Ký Gói Khám), 'results' (Kết Quả Khám), 'appointments' (Hẹn Tái Khám), 'queues' (Bảng Chờ Viện)
+  const [activeTab, setActiveTab] = useState<'profile' | 'packages' | 'advisor' | 'results' | 'appointments' | 'queues'>('packages');
+
+  // Danh sách các gói khám / dịch vụ lẻ đã đăng ký thành công
+  // Bao gồm gói khám trong quá khứ đã hoàn thành (15/10/2026) đồng bộ với mục Kết Quả Khám
+  const [registeredBookings, setRegisteredBookings] = useState<BookingAppointment[]>(() => {
+    try {
+      const saved = localStorage.getItem('smart_opd_patient_bookings');
+      let list: BookingAppointment[] = saved ? JSON.parse(saved) : [];
+      const hasPast = list.some((b) => b.bookingCode === pastCompletedBooking.bookingCode);
+      if (!hasPast) {
+        list = [...list, pastCompletedBooking];
+        localStorage.setItem('smart_opd_patient_bookings', JSON.stringify(list));
+      } else {
+        list = list.map((b) =>
+          b.bookingCode === pastCompletedBooking.bookingCode
+            ? { ...pastCompletedBooking, ...b, status: 'COMPLETED' }
+            : b
+        );
+      }
+      return list;
+    } catch {
+      return [pastCompletedBooking];
+    }
+  });
+
+  // Gói khám đã chọn để xem chi tiết lộ trình di chuyển (null thì xem danh sách các gói)
+  const [selectedBooking, setSelectedBooking] = useState<BookingAppointment | null>(null);
+
+  // Lộ trình hiện tại tương ứng với gói đã đăng ký
   const [currentRoute, setCurrentRoute] = useState<Route | null>(null);
   const [proposedRoute, setProposedRoute] = useState<Route | null>(null);
   const [isRecalculating, setIsRecalculating] = useState<boolean>(false);
   const [toastNotice, setToastNotice] = useState<{ title: string; message: string } | null>(null);
   const [isSubmittingDecision, setIsSubmittingDecision] = useState<boolean>(false);
 
-  const showToast = (message: string, title: string = 'Thông Báo Lộ Trình') => {
+  const showToast = (message: string, title: string = 'Thông Báo') => {
     setToastNotice({ title, message });
   };
 
@@ -49,72 +141,106 @@ export const App: React.FC = () => {
   // Mẫu lượt khám của bệnh nhân đăng nhập
   const visitId = currentUser?.visitId || 'VK-20261111-001';
 
-  // Tự động đóng thông báo sau 3 giây
+  // Tự động đóng thông báo sau 3.5 giây
   useEffect(() => {
     if (toastNotice) {
       const timer = setTimeout(() => {
         setToastNotice(null);
-      }, 3000);
+      }, 3500);
       return () => clearTimeout(timer);
     }
   }, [toastNotice]);
 
-  // Khởi tạo lộ trình mẫu
-  useEffect(() => {
-    // Tạo lộ trình mẫu ban đầu
-    const mockRoute: Route = {
-      id: 'route-initial-01',
-      visitId: visitId,
-      version: 1,
-      creationReason: 'INITIAL',
-      status: 'ACTIVE',
-      suggestionSource: 'AI_RL',
-      estimatedTotalDurationSeconds: 3120, // 52 phút
-      steps: [
-        {
-          id: 'step-01',
-          stepOrder: 1,
-          serviceId: 'es-01-kham-noi',
-          serviceName: 'Khám Nội Tổng Quát',
-          servicePointId: 'sp-02-internal',
-          servicePointName: 'Phòng Khám Nội',
-          roomNumber: 'Phòng 101',
-          status: 'IN_PROGRESS',
-          estimatedWaitSeconds: 300,
-          estimatedServiceSeconds: 600
-        },
-        {
-          id: 'step-02',
-          stepOrder: 2,
-          serviceId: 'es-05-xn-mau',
-          serviceName: 'Tổng Phân Tích Tế Bào Máu (CBC)',
-          servicePointId: 'sp-06-lab',
-          servicePointName: 'Phòng Lấy Mẫu Xét Nghiệm',
-          roomNumber: 'Phòng XN-02',
-          status: 'NOT_STARTED',
-          estimatedWaitSeconds: 480,
-          estimatedServiceSeconds: 240
-        },
-        {
-          id: 'step-03',
-          stepOrder: 3,
-          serviceId: 'es-04-xq-nguc',
-          serviceName: 'Chụp X-Quang Ngực Thẳng',
-          servicePointId: 'sp-05-xray',
-          servicePointName: 'Phòng Chụp X-Quang',
-          roomNumber: 'Phòng CĐHA-01',
-          status: 'NOT_STARTED',
-          estimatedWaitSeconds: 900,
-          estimatedServiceSeconds: 360
-        }
-      ]
-    };
-    setCurrentRoute(mockRoute);
-  }, [visitId]);
+  // Cập nhật và lưu hồ sơ cá nhân
+  const handleSaveProfile = (newProfile: PatientProfile) => {
+    setPatientProfile(newProfile);
+    try {
+      localStorage.setItem('smart_opd_patient_profile', JSON.stringify(newProfile));
+    } catch {
+      // ignore
+    }
 
-  // Yêu cầu tính lại lộ trình
+    if (currentUser) {
+      const updatedUser: PatientUser = {
+        ...currentUser,
+        fullName: newProfile.fullName,
+        age: newProfile.age,
+        gender: newProfile.gender === 'FEMALE' ? 'Nữ' : 'Nam'
+      };
+      setCurrentUser(updatedUser);
+      try {
+        localStorage.setItem('smart_opd_patient_user', JSON.stringify(updatedUser));
+      } catch {
+        // ignore
+      }
+    }
+
+    showToast('Đã lưu hồ sơ cá nhân thành công! Dữ liệu sẵn sàng tự động điền khi đăng ký.', 'Hồ Sơ Cá Nhân');
+  };
+
+  // Xử lý khi bệnh nhân đăng ký thành công một gói khám hoặc khám lẻ mới
+  const handleRegisterSuccess = (booking: BookingAppointment) => {
+    const updated = [booking, ...registeredBookings.filter((b) => b.bookingCode !== booking.bookingCode)];
+    setRegisteredBookings(updated);
+    try {
+      localStorage.setItem('smart_opd_patient_bookings', JSON.stringify(updated));
+    } catch {
+      // ignore
+    }
+
+    // Tự động chọn gói vừa đăng ký và sinh lộ trình tương ứng
+    setSelectedBooking(booking);
+    const newRoute = buildRouteForBooking(booking, visitId);
+    setCurrentRoute(newRoute);
+    setActiveTab('packages');
+
+    showToast(
+      `Đã đăng ký thành công "${booking.packageName}" (#${booking.bookingCode}) vào ${booking.timeSlot}, ngày ${booking.appointmentDate}. Lộ trình khám đã được khởi tạo!`,
+      'Đăng Ký Thành Công'
+    );
+  };
+
+  // Khi nhấn vào một gói khám trong danh sách đã đăng ký -> Mở lộ trình tương ứng
+  const handleSelectBooking = (booking: BookingAppointment) => {
+    setSelectedBooking(booking);
+    const route = buildRouteForBooking(booking, visitId);
+    setCurrentRoute(route);
+  };
+
+  // Hủy / xóa một gói đã đăng ký
+  const handleDeleteBooking = (bookingCode: string) => {
+    const updated = registeredBookings.filter((b) => b.bookingCode !== bookingCode);
+    setRegisteredBookings(updated);
+    try {
+      localStorage.setItem('smart_opd_patient_bookings', JSON.stringify(updated));
+    } catch {
+      // ignore
+    }
+
+    if (selectedBooking?.bookingCode === bookingCode) {
+      setSelectedBooking(null);
+      setCurrentRoute(null);
+    }
+    showToast(`Đã xóa gói khám #${bookingCode}.`, 'Thông Báo');
+  };
+
+  // Yêu cầu tính lại lộ trình tối ưu hơn
   const handleRecalculate = async () => {
-    setActiveTab('journey');
+    setActiveTab('packages');
+
+    let activeBooking = selectedBooking;
+    if (!activeBooking) {
+      if (registeredBookings.length > 0) {
+        activeBooking = registeredBookings[0];
+        setSelectedBooking(activeBooking);
+        const r = buildRouteForBooking(activeBooking, visitId);
+        setCurrentRoute(r);
+      } else {
+        showToast('Bạn chưa có gói khám nào đã đăng ký để tìm phương án tối ưu.', 'Lộ Trình Tối Ưu Hơn');
+        return;
+      }
+    }
+
     setIsRecalculating(true);
     setToastNotice(null);
 
@@ -136,58 +262,36 @@ export const App: React.FC = () => {
           showToast(data.message || 'Lộ trình hiện tại đã tối ưu, bạn không cần thay đổi.');
         }
       } else {
-        // Mô phỏng phương án tối ưu nếu API chưa có visit này
+        // Mô phỏng thuật toán AI điều phối tối ưu lại thứ tự phòng khám thực tế
         setTimeout(() => {
-          const improvedRoute: Route = {
-            id: 'route-recalc-02',
-            visitId: visitId,
-            version: (currentRoute?.version || 1) + 1,
-            creationReason: 'RECALC_REQUEST',
-            status: 'ACTIVE',
-            suggestionSource: 'AI_RL',
-            estimatedTotalDurationSeconds: 2400, // 40 phút (tiết kiệm 12 phút!)
-            steps: [
-              {
-                id: 'step-new-01',
-                stepOrder: 1,
-                serviceId: 'es-01-kham-noi',
-                serviceName: 'Khám Nội Tổng Quát',
-                servicePointId: 'sp-02-internal',
-                servicePointName: 'Phòng Khám Nội',
-                roomNumber: 'Phòng 101',
-                status: 'IN_PROGRESS',
-                estimatedWaitSeconds: 300,
-                estimatedServiceSeconds: 600
-              },
-              {
-                id: 'step-new-02',
+          if (currentRoute && currentRoute.steps.length > 0) {
+            const reorderedSteps = [...currentRoute.steps];
+            if (reorderedSteps.length >= 3) {
+              const temp = reorderedSteps[1];
+              reorderedSteps[1] = {
+                ...reorderedSteps[2],
                 stepOrder: 2,
-                serviceId: 'es-04-xq-nguc',
-                serviceName: 'Chụp X-Quang Ngực Thẳng',
-                servicePointId: 'sp-05-xray',
-                servicePointName: 'Phòng Chụp X-Quang (Đang vắng)',
-                roomNumber: 'Phòng CĐHA-01',
-                status: 'NOT_STARTED',
-                estimatedWaitSeconds: 180,
-                estimatedServiceSeconds: 360
-              },
-              {
-                id: 'step-new-03',
+                estimatedWaitSeconds: Math.max(120, Math.floor(reorderedSteps[2].estimatedWaitSeconds * 0.55))
+              };
+              reorderedSteps[2] = {
+                ...temp,
                 stepOrder: 3,
-                serviceId: 'es-05-xn-mau',
-                serviceName: 'Tổng Phân Tích Tế Bào Máu (CBC)',
-                servicePointId: 'sp-06-lab',
-                servicePointName: 'Phòng Lấy Mẫu Xét Nghiệm',
-                roomNumber: 'Phòng XN-02',
-                status: 'NOT_STARTED',
-                estimatedWaitSeconds: 420,
-                estimatedServiceSeconds: 240
-              }
-            ]
-          };
-          setProposedRoute(improvedRoute);
+                estimatedWaitSeconds: Math.max(180, Math.floor(temp.estimatedWaitSeconds * 0.7))
+              };
+            }
+            const improvedRoute: Route = {
+              ...currentRoute,
+              id: `route-recalc-${Date.now()}`,
+              version: (currentRoute.version || 1) + 1,
+              creationReason: 'RECALC_REQUEST',
+              suggestionSource: 'AI_RL',
+              estimatedTotalDurationSeconds: Math.floor(currentRoute.estimatedTotalDurationSeconds * 0.78),
+              steps: reorderedSteps
+            };
+            setProposedRoute(improvedRoute);
+          }
           setIsRecalculating(false);
-        }, 1200);
+        }, 1100);
       }
     } catch {
       setIsRecalculating(false);
@@ -239,19 +343,39 @@ export const App: React.FC = () => {
     }
   };
 
+  // CÁC MỤC CHÍNH Ở SIDEBAR
   const navItems = [
     {
-      id: 'journey' as const,
-      name: 'Lộ Trình Khám',
-      desc: 'Hành trình & thứ tự phòng khám',
-      icon: RouteIcon,
-      badge: currentRoute ? `${currentRoute.steps.filter((s) => s.status === 'COMPLETED').length}/${currentRoute.steps.length}` : undefined
+      id: 'profile' as const,
+      name: 'Hồ Sơ Cá Nhân',
+      desc: 'Thông tin cá nhân & tiền sử bệnh',
+      icon: UserCircle
+    },
+    {
+      id: 'packages' as const,
+      name: 'Các Gói Khám Đã Đăng Ký',
+      desc: 'Danh sách gói & xem lộ trình',
+      icon: Layers,
+      badge: registeredBookings.length > 0 ? `${registeredBookings.length} gói` : undefined
     },
     {
       id: 'advisor' as const,
       name: 'Đăng Ký Gói Khám',
       desc: 'Khám cá nhân & doanh nghiệp',
       icon: Sparkles
+    },
+    {
+      id: 'results' as const,
+      name: 'Kết Quả Khám',
+      desc: 'Ghi ngày tháng & kết quả đợt khám',
+      icon: FileText
+    },
+    {
+      id: 'appointments' as const,
+      name: 'Hẹn Tái Khám',
+      desc: 'Lịch hẹn do bác sĩ chỉ định',
+      icon: CalendarClock,
+      badge: '1 lịch'
     },
     {
       id: 'queues' as const,
@@ -302,11 +426,10 @@ export const App: React.FC = () => {
         </div>
       </header>
 
-      {/* Main Container: Bố cục 2 Cột (Sidebar Trái Xếp Dọc 3 Mục + Nội Dung Phải Rộng Rãi) */}
+      {/* Main Container: Bố cục 2 Cột (Sidebar Trái Xếp Dọc + Nội Dung Phải Rộng Rãi) */}
       <div className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 lg:p-8 flex flex-col md:flex-row gap-6">
-        {/* Sidebar Bên Trái: Xếp 3 mục theo hàng dọc, liên tiếp nhau */}
+        {/* Sidebar Bên Trái: Menu Điều Hướng (Đã bỏ hoàn toàn ô hồ sơ bệnh nhân rườm rà phía dưới) */}
         <aside className="w-full md:w-72 lg:w-80 shrink-0 space-y-5">
-          {/* Menu Điều Hướng Dọc 4 Mục */}
           <div className="bg-white p-3 rounded-3xl border-2 border-blue-200 shadow-sm space-y-1.5">
             <div className="px-3 pt-2 pb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
               Chức Năng Chính
@@ -319,8 +442,13 @@ export const App: React.FC = () => {
               return (
                 <button
                   key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center justify-between p-3 rounded-2xl text-left transition-all ${
+                  onClick={() => {
+                    if (item.id === 'packages' && activeTab === 'packages') {
+                      setSelectedBooking(null); // Click lại vào nút để quay về danh sách nếu đang xem lộ trình
+                    }
+                    setActiveTab(item.id);
+                  }}
+                  className={`w-full flex items-center justify-between p-3 rounded-2xl text-left transition-all cursor-pointer ${
                     isActive
                       ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20 font-bold'
                       : 'hover:bg-slate-100 text-slate-700'
@@ -358,12 +486,12 @@ export const App: React.FC = () => {
               );
             })}
 
-            {/* Mục Thứ 4: Lộ Trình Tối Ưu Hơn */}
+            {/* Mục Thứ 5: Lộ Trình Tối Ưu Hơn */}
             <div className="pt-2 border-t border-slate-100">
               <button
                 onClick={handleRecalculate}
                 disabled={isRecalculating}
-                className="w-full flex items-center justify-between p-3 rounded-2xl text-left transition-all hover:bg-slate-100 text-slate-700 group"
+                className="w-full flex items-center justify-between p-3 rounded-2xl text-left transition-all hover:bg-slate-100 text-slate-700 group cursor-pointer"
               >
                 <div className="flex items-center gap-3">
                   <div
@@ -387,75 +515,49 @@ export const App: React.FC = () => {
               </button>
             </div>
           </div>
-
-          {/* Thẻ Thông Tin Bệnh Nhân Chi Tiết (Khắc phục cảm giác trống vắng) */}
-          <div className="bg-white p-5 rounded-3xl border-2 border-blue-200 shadow-sm space-y-4 hidden md:block">
-            <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100">
-              <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center">
-                <User className="w-4 h-4" />
-              </div>
-              <div>
-                <div className="text-xs text-slate-400 font-medium">Hồ Sơ Bệnh Nhân</div>
-                <div className="text-sm font-bold text-slate-800">{currentUser.fullName}</div>
-              </div>
-            </div>
-
-            <div className="space-y-2 text-xs">
-              <div className="flex items-center justify-between text-slate-600">
-                <span>Mã Lượt Khám:</span>
-                <span className="font-mono font-bold text-slate-800">{visitId}</span>
-              </div>
-              <div className="flex items-center justify-between text-slate-600">
-                <span>Trạng Thái:</span>
-                <span className="font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
-                  Đang Khám
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-slate-600">
-                <span>BHYT / CCCD:</span>
-                <span className="flex items-center gap-1 text-slate-700 font-medium">
-                  <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-                  Đã Xác Thực
-                </span>
-              </div>
-            </div>
-
-            {/* Trợ giúp nhanh */}
-            <div className="p-3 bg-blue-50/60 rounded-2xl border border-blue-100 space-y-1.5">
-              <div className="text-[11px] font-bold text-blue-900 flex items-center gap-1.5">
-                <PhoneCall className="w-3.5 h-3.5 text-blue-600" />
-                <span>Hỗ Trợ Bệnh Nhân</span>
-              </div>
-              <p className="text-[11px] text-blue-700 leading-snug">
-                Nếu cần điều phối viên hỗ trợ di chuyển, vui lòng liên hệ <strong>Quầy Lễ Tân (Tầng 1)</strong> hoặc hotline <strong>1900 8899</strong>.
-              </p>
-            </div>
-          </div>
         </aside>
 
-        {/* Cột Phải: Nội Dung Chính Mở Rộng Rộng Rãi */}
+        {/* Cột Phải: Nội Dung Chính */}
         <main className="flex-1 min-w-0">
-          {activeTab === 'journey' && (
-            <LiveJourney
+          {activeTab === 'profile' && (
+            <PatientProfileView
+              initialProfile={patientProfile}
+              onSaveProfile={handleSaveProfile}
+              onGoToAdvisor={() => setActiveTab('advisor')}
+            />
+          )}
+
+          {activeTab === 'packages' && (
+            <RegisteredPackagesView
+              registeredBookings={registeredBookings}
+              selectedBooking={selectedBooking}
+              onSelectBooking={handleSelectBooking}
+              onBackToList={() => setSelectedBooking(null)}
+              onGoToAdvisor={() => setActiveTab('advisor')}
+              onGoToResults={() => setActiveTab('results')}
+              onDeleteBooking={handleDeleteBooking}
               currentRoute={currentRoute}
               queueNumber={currentUser.queueNumber}
             />
           )}
+
           {activeTab === 'advisor' && (
             <PackageAdvisor
-              onRegisterSuccess={(info) =>
-                showToast(
-                  `Đã đặt lịch "${info.packageName}" tại ${info.facilityName} (${info.timeSlot}, ngày ${info.appointmentDate}). Mã lịch khám: #${info.bookingCode}`,
-                  'Đăng Ký Thành Công'
-                )
-              }
+              currentUser={currentUser}
+              patientProfile={patientProfile}
+              onRegisterSuccess={handleRegisterSuccess}
             />
           )}
+
+          {activeTab === 'results' && <MedicalResultsView />}
+
+          {activeTab === 'appointments' && <FollowUpAppointmentsView />}
+
           {activeTab === 'queues' && <QueueBoard />}
         </main>
       </div>
 
-      {/* Cửa Sổ Nhỏ Thông Báo Nổi (Toast Notification) - Có Nút Đóng & Tự Biến Mất */}
+      {/* Cửa Sổ Nhỏ Thông Báo Nổi (Toast Notification) */}
       {toastNotice && (
         <div className="fixed top-20 right-4 sm:right-8 z-50 max-w-sm w-full bg-white border-2 border-emerald-300 rounded-3xl shadow-2xl p-4 flex items-start gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
           <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
