@@ -49,10 +49,15 @@ export interface PatientUser {
 }
 
 export interface PatientProfile {
+  id: string; // Mã định danh hồ sơ (e.g. "prof-self", "prof-dad", ...)
+  relationship: 'SELF' | 'FATHER' | 'MOTHER' | 'GRANDFATHER' | 'GRANDMOTHER' | 'SPOUSE' | 'CHILD' | 'OTHER' | string;
+  relationshipLabel?: string; // Nhãn hiển thị quan hệ: "Bản thân", "Ba", "Mẹ", "Ông", "Bà", "Vợ/Chồng", "Con",...
+  isDefault?: boolean; // Hồ sơ mặc định của chủ tài khoản
   fullName: string;
   phone: string;
   age: number;
-  gender: string;
+  dateOfBirth?: string;
+  gender: 'MALE' | 'FEMALE' | 'OTHER' | string;
   insuranceCard: string;
   idCardNumber?: string;
   selectedDiseases: string[];
@@ -60,6 +65,19 @@ export interface PatientProfile {
   maritalStatus: string;
   address?: string;
   personalNotes?: string;
+}
+
+export interface MedicalImagingItem {
+  id: string;
+  title: string; // ví dụ: "Ảnh X-Quang Ngực Thẳng KTS", "Ảnh Siêu Âm Gan Mật", "Ảnh Nội Soi Dạ Dày"
+  modality: 'XRAY' | 'ULTRASOUND' | 'ENDOSCOPY' | 'CT' | 'MRI' | 'ECG' | 'OTHER';
+  modalityName: string; // "Chụp X-Quang", "Siêu Âm KTS", "Nội Soi Tiêu Hóa"
+  imageUrl: string; // Link / SVG data biểu diễn ảnh y tế trực quan
+  captureTime: string; // Ngày giờ chụp
+  roomNumber: string; // Phòng chụp
+  technicianOrDoctor: string; // Bác sĩ / KTV thực hiện
+  diagnosticConclusion: string; // Kết luận hình ảnh y khoa
+  techniqueDetails?: string; // Thông số kỹ thuật chụp
 }
 
 export interface PackageDetail {
@@ -115,17 +133,36 @@ export interface BookingAppointment {
   contactName: string;
   contactPhone: string;
   relationship?: string;
+  relationshipLabel?: string;
+  profileId?: string;
   patientAge?: number;
   patientGender?: string;
   insuranceCardNumber?: string;
   medicalHistory?: string;
   companyName?: string;
   estimatedEmployees?: string;
+  maleEmployees?: number;
+  femaleEmployees?: number;
+  totalEmployees?: number;
   email?: string;
   notes?: string;
   bookingCode: string;
   status?: 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
+  paymentStatus?: 'PAID_QR' | 'PAY_AT_COUNTER' | 'PENDING';
+  paymentMethod?: 'VIETQR' | 'COUNTER';
+  paidAt?: string;
   resultRecordCode?: string;
+}
+
+export interface PatientNotificationItem {
+  id: string;
+  title: string;
+  message: string;
+  time: string;
+  type: 'URGENT' | 'APPOINTMENT' | 'RESULT' | 'ROUTE' | 'SYSTEM';
+  targetTab: 'profile' | 'packages' | 'advisor' | 'results' | 'appointments' | 'queues';
+  isRead: boolean;
+  actionLabel?: string;
 }
 
 export interface ServiceResultDetail {
@@ -141,6 +178,8 @@ export interface ServiceResultDetail {
 
 export interface MedicalExamRecord {
   id: string;
+  profileId?: string; // ID hồ sơ tương ứng (ví dụ: "prof-self", "prof-dad", "prof-mom")
+  patientName?: string; // Tên bệnh nhân của đợt khám này
   recordCode: string; // ví dụ: "HSBA-20261015-88"
   examDate: string; // Ngày, tháng khám: "15/10/2026"
   examType: 'PACKAGE' | 'SINGLE';
@@ -150,6 +189,7 @@ export interface MedicalExamRecord {
   diagnosis: string; // Chẩn đoán của đợt khám
   generalConclusion: string; // Kết luận tổng quát
   serviceResults: ServiceResultDetail[]; // Kết quả chi tiết từng dịch vụ
+  imagingResults?: MedicalImagingItem[]; // Kết quả ảnh chụp X-Quang, Siêu Âm, Nội Soi
   prescription?: Array<{
     drugName: string;
     dosage: string;

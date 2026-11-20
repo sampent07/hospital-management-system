@@ -19,10 +19,13 @@ import { PackageDetailModal } from '../components/PackageDetailModal';
 import { AppointmentBookingModal, RegistrationInfo } from '../components/AppointmentBookingModal';
 import { PackageConsultationModal } from '../components/PackageConsultationModal';
 import { SingleServicesModal } from '../components/SingleServicesModal';
+import { defaultPatientProfilesList } from '../utils/mockImagingData';
 
 interface PackageAdvisorProps {
   currentUser?: PatientUser | null;
   patientProfile?: PatientProfile;
+  patientProfiles?: PatientProfile[];
+  initialSelectedProfile?: PatientProfile | null;
   onRegisterSuccess?: (booking: BookingAppointment) => void;
 }
 
@@ -708,6 +711,8 @@ const commonDiseases = [
 export const PackageAdvisor: React.FC<PackageAdvisorProps> = ({
   currentUser,
   patientProfile,
+  patientProfiles,
+  initialSelectedProfile,
   onRegisterSuccess
 }) => {
   // 1. CHIA LÀM 2 HƯỚNG KHÁM: CÁ NHÂN HOẶC DOANH NGHIỆP
@@ -715,6 +720,17 @@ export const PackageAdvisor: React.FC<PackageAdvisorProps> = ({
 
   // 2. HÌNH THỨC KHÁM: KHÁM THEO GÓI HOẶC KHÁM LẺ
   const [examMode, setExamMode] = useState<'PACKAGE' | 'SINGLE'>('PACKAGE');
+
+  // Danh sách hồ sơ bệnh nhân trong tài khoản (hỗ trợ nhiều hồ sơ: Bản thân, Ba, Mẹ...)
+  const profilesList = patientProfiles && patientProfiles.length > 0
+    ? patientProfiles
+    : (patientProfile ? [patientProfile] : defaultPatientProfilesList);
+
+  // ID hồ sơ bệnh nhân đang chọn để điền thông tin tự động
+  const [selectedProfileIdToFill, setSelectedProfileIdToFill] = useState<string>(() => {
+    if (initialSelectedProfile?.id) return initialSelectedProfile.id;
+    return profilesList[0]?.id || 'prof-self';
+  });
 
   // Dịch vụ khám lẻ được chọn (Mặc định chọn 2 dịch vụ mẫu: X-Quang & Khám Dạ Dày)
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>(['srv-xq-nguc', 'srv-kham-daday']);
@@ -737,23 +753,38 @@ export const PackageAdvisor: React.FC<PackageAdvisorProps> = ({
   const [purpose, setPurpose] = useState<string>('GENERAL_CHECKUP');
   const [individualNotes, setIndividualNotes] = useState<string>('');
 
+  // Hàm điền dữ liệu từ một đối tượng hồ sơ bệnh nhân
+  const applyProfileData = (profile: PatientProfile) => {
+    setPatientName(profile.fullName);
+    setPatientPhone(profile.phone);
+    setAge(profile.age);
+    setGender(profile.gender);
+    setInsuranceCard(profile.insuranceCard || profile.idCardNumber || '');
+    setSelectedDiseases([...(profile.selectedDiseases || [])]);
+    setMedicalHistoryDetail(profile.medicalHistoryDetail || '');
+    setMaritalStatus(profile.maritalStatus || 'MARRIED');
+    if (profile.personalNotes) {
+      setIndividualNotes(profile.personalNotes);
+    }
+  };
+
+  // Tự động điền nếu được truyền initialSelectedProfile
+  React.useEffect(() => {
+    if (initialSelectedProfile) {
+      setSelectedProfileIdToFill(initialSelectedProfile.id);
+      setIsUseProfileData(true);
+      applyProfileData(initialSelectedProfile);
+    }
+  }, [initialSelectedProfile]);
+
   // Xử lý khi tick / bỏ tick vào ô vuông nhỏ: Lấy dữ liệu từ hồ sơ
   const handleToggleProfileCheckbox = (checked: boolean) => {
     setIsUseProfileData(checked);
     setFormValidationError(null);
     if (checked) {
-      if (patientProfile) {
-        setPatientName(patientProfile.fullName);
-        setPatientPhone(patientProfile.phone);
-        setAge(patientProfile.age);
-        setGender(patientProfile.gender);
-        setInsuranceCard(patientProfile.insuranceCard);
-        setSelectedDiseases([...patientProfile.selectedDiseases]);
-        setMedicalHistoryDetail(patientProfile.medicalHistoryDetail);
-        setMaritalStatus(patientProfile.maritalStatus);
-        if (patientProfile.personalNotes) {
-          setIndividualNotes(patientProfile.personalNotes);
-        }
+      const activeP = profilesList.find((p) => p.id === selectedProfileIdToFill) || patientProfile || profilesList[0];
+      if (activeP) {
+        applyProfileData(activeP);
       } else if (currentUser) {
         setPatientName(currentUser.fullName);
         setAge(currentUser.age);
@@ -773,12 +804,15 @@ export const PackageAdvisor: React.FC<PackageAdvisorProps> = ({
     }
   };
 
-  // FORM KHÁM DOANH NGHIỆP
+  // FORM KHÁM DOANH NGHIỆP: Thay tổng lượng thành viên bằng chia theo giới tính Nam: ... ; Nữ: ...
   const [companyName, setCompanyName] = useState<string>('Công ty Cổ phần Công nghệ Smart OPD');
   const [contactPerson, setContactPerson] = useState<string>('Nguyễn Văn Minh (Trưởng phòng HR)');
   const [contactPhone, setContactPhone] = useState<string>('0912 345 678');
   const [contactEmail, setContactEmail] = useState<string>('hr@smartopd.vn');
-  const [employeeScale, setEmployeeScale] = useState<string>('50 – 200 nhân sự');
+  const [maleEmployees, setMaleEmployees] = useState<number>(60);
+  const [femaleEmployees, setFemaleEmployees] = useState<number>(40);
+  const totalEmployees = (Number(maleEmployees) || 0) + (Number(femaleEmployees) || 0);
+
   const [workEnvironment, setWorkEnvironment] = useState<string>('OFFICE');
   const [corporatePackageNeed, setCorporatePackageNeed] = useState<string>('TT32_STANDARD');
   const [corporateNotes, setCorporateNotes] = useState<string>('');
@@ -848,6 +882,10 @@ export const PackageAdvisor: React.FC<PackageAdvisorProps> = ({
       }
       if (!contactPhone.trim()) {
         setFormValidationError('Vui lòng điền Số điện thoại liên hệ của doanh nghiệp!');
+        return false;
+      }
+      if (totalEmployees <= 0) {
+        setFormValidationError('Vui lòng nhập số lượng nhân viên Nam hoặc Nữ lớn hơn 0!');
         return false;
       }
     }
@@ -921,16 +959,24 @@ export const PackageAdvisor: React.FC<PackageAdvisorProps> = ({
     }
   };
 
+  const selectedProfile = profilesList.find((p) => p.id === selectedProfileIdToFill);
+
   // Tạo đối tượng dữ liệu đăng ký hoàn chỉnh để chuyển sang modal
   const currentRegistrationInfo: RegistrationInfo = {
     contactName: targetType === 'INDIVIDUAL' ? patientName : contactPerson,
     contactPhone: targetType === 'INDIVIDUAL' ? patientPhone : contactPhone,
+    relationship: targetType === 'INDIVIDUAL' ? (selectedProfile?.relationship || 'SELF') : undefined,
+    relationshipLabel: targetType === 'INDIVIDUAL' ? (selectedProfile?.relationshipLabel || 'Bản thân') : undefined,
+    profileId: targetType === 'INDIVIDUAL' ? (selectedProfile?.id || selectedProfileIdToFill) : undefined,
     age: targetType === 'INDIVIDUAL' ? age : undefined,
     gender: targetType === 'INDIVIDUAL' ? gender : undefined,
     insuranceCardNumber: targetType === 'INDIVIDUAL' ? insuranceCard : undefined,
     medicalHistory: targetType === 'INDIVIDUAL' ? fullMedicalHistory : undefined,
     companyName: targetType === 'CORPORATE' ? companyName : undefined,
-    employeeScale: targetType === 'CORPORATE' ? employeeScale : undefined,
+    employeeScale: targetType === 'CORPORATE' ? `${totalEmployees} nhân sự (Nam: ${maleEmployees} • Nữ: ${femaleEmployees})` : undefined,
+    maleEmployees: targetType === 'CORPORATE' ? maleEmployees : undefined,
+    femaleEmployees: targetType === 'CORPORATE' ? femaleEmployees : undefined,
+    totalEmployees: targetType === 'CORPORATE' ? totalEmployees : undefined,
     workEnvironment: targetType === 'CORPORATE' ? workEnvironment : undefined,
     email: targetType === 'CORPORATE' ? contactEmail : undefined,
     notes: targetType === 'INDIVIDUAL' ? individualNotes : corporateNotes
@@ -1280,6 +1326,77 @@ export const PackageAdvisor: React.FC<PackageAdvisorProps> = ({
                   </label>
                 </div>
 
+                {/* Khi tick vô ô 'Lấy dữ liệu từ hồ sơ': Tóm gọn các dòng hồ sơ (1 dòng / 1 hồ sơ gồm: Tên, Tuổi, Giới tính) */}
+                {isUseProfileData && (
+                  <div className="p-2.5 bg-blue-50/80 border border-blue-200 rounded-2xl space-y-1.5 animate-in fade-in duration-200 shadow-inner">
+                    <div className="text-[11px] font-bold text-blue-900 px-1 flex items-center justify-between">
+                      <span>Chọn hồ sơ cần lấy dữ liệu (nhấp để tự động điền vào phiếu):</span>
+                      <span className="text-[10px] text-blue-700 font-semibold bg-blue-100/90 px-2 py-0.5 rounded-full">
+                        {profilesList.length} hồ sơ có sẵn
+                      </span>
+                    </div>
+
+                    <div className="space-y-1">
+                      {profilesList.map((p) => {
+                        const isSelected = p.id === selectedProfileIdToFill;
+                        const genderLabel = p.gender === 'FEMALE' ? 'Nữ' : 'Nam';
+                        const relationLabel = p.relationshipLabel || (p.relationship === 'SELF' ? 'Bản thân' : 'Người thân');
+
+                        return (
+                          <div
+                            key={p.id}
+                            onClick={() => {
+                              setSelectedProfileIdToFill(p.id);
+                              applyProfileData(p);
+                            }}
+                            className={`flex items-center justify-between px-3 py-1.5 rounded-xl border text-xs cursor-pointer transition-all ${
+                              isSelected
+                                ? 'bg-white border-blue-500 text-blue-950 font-bold shadow-xs ring-1 ring-blue-400'
+                                : 'bg-white/70 border-slate-200 text-slate-700 hover:bg-white hover:border-slate-300'
+                            }`}
+                          >
+                            {/* Cột trái: Nút chọn + Tên người khám + Quan hệ */}
+                            <div className="flex items-center gap-2 truncate">
+                              <input
+                                type="radio"
+                                name="selected_profile_to_fill"
+                                checked={isSelected}
+                                onChange={() => {
+                                  setSelectedProfileIdToFill(p.id);
+                                  applyProfileData(p);
+                                }}
+                                className="w-3.5 h-3.5 text-blue-600 border-slate-300 focus:ring-blue-500 cursor-pointer accent-blue-600 shrink-0"
+                              />
+                              <span className="truncate">
+                                {p.fullName}{' '}
+                                <span className="text-[11px] text-blue-700 font-semibold">
+                                  ({relationLabel})
+                                </span>
+                              </span>
+                            </div>
+
+                            {/* Cột phải: Tuổi và Giới tính (ngắn gọn trên cùng 1 dòng) */}
+                            <div className="flex items-center gap-2.5 text-[11px] shrink-0 font-medium text-slate-600">
+                              <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-lg border border-slate-200">
+                                {p.age} tuổi
+                              </span>
+                              <span
+                                className={`px-2 py-0.5 rounded-lg border font-semibold ${
+                                  p.gender === 'FEMALE'
+                                    ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                    : 'bg-blue-50 text-blue-700 border-blue-200'
+                                }`}
+                              >
+                                Giới tính: {genderLabel}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {/* NÚT 1: KHÁM THEO GÓI */}
                   <button
@@ -1364,34 +1481,53 @@ export const PackageAdvisor: React.FC<PackageAdvisorProps> = ({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  <div>
-                    <label className="text-xs font-semibold text-slate-700 block mb-1">Quy Mô Nhân Sự:</label>
-                    <select
-                      value={employeeScale}
-                      onChange={(e) => setEmployeeScale(e.target.value)}
-                      className="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-2xl text-xs font-semibold text-slate-900 outline-none focus:border-blue-500 focus:bg-white"
-                    >
-                      <option value="Dưới 50 nhân sự">Dưới 50 nhân sự</option>
-                      <option value="50 – 200 nhân sự">50 – 200 nhân sự</option>
-                      <option value="200 – 500 nhân sự">200 – 500 nhân sự</option>
-                      <option value="Trên 500 nhân sự">Trên 500 nhân sự</option>
-                    </select>
-                  </div>
+                {/* Thay thế tổng lượng thành viên bằng chia theo giới tính: Nam: ... ; Nữ: ... */}
+                <div className="space-y-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                      <label className="text-xs font-semibold text-slate-700 block mb-1">
+                        Số Lượng Nam <span className="text-rose-500">*</span>:
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        value={maleEmployees}
+                        onChange={(e) => setMaleEmployees(Math.max(0, parseInt(e.target.value) || 0))}
+                        placeholder="Ví dụ: 60"
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-2xl text-xs font-bold text-slate-900 outline-none focus:border-blue-500 focus:bg-white"
+                        required
+                      />
+                    </div>
 
-                  <div>
-                    <label className="text-xs font-semibold text-slate-700 block mb-1">Môi Trường Làm Việc Chính:</label>
-                    <select
-                      value={workEnvironment}
-                      onChange={(e) => setWorkEnvironment(e.target.value)}
-                      className="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-2xl text-xs font-semibold text-slate-900 outline-none focus:border-blue-500 focus:bg-white"
-                    >
-                      <option value="OFFICE">Khối Văn Phòng / IT (Ngồi nhiều, máy tính)</option>
-                      <option value="FACTORY">Sản Xuất / Nhà Máy / Cơ Khí</option>
-                      <option value="LOGISTICS">Vận Tải / Kho Bãi / Logistics</option>
-                      <option value="SERVICE">Dịch Vụ / Bán Lẻ / F&B</option>
-                    </select>
+                    <div>
+                      <label className="text-xs font-semibold text-slate-700 block mb-1">
+                        Số Lượng Nữ <span className="text-rose-500">*</span>:
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        value={femaleEmployees}
+                        onChange={(e) => setFemaleEmployees(Math.max(0, parseInt(e.target.value) || 0))}
+                        placeholder="Ví dụ: 40"
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-2xl text-xs font-bold text-slate-900 outline-none focus:border-blue-500 focus:bg-white"
+                        required
+                      />
+                    </div>
                   </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">Môi Trường Làm Việc Chính:</label>
+                  <select
+                    value={workEnvironment}
+                    onChange={(e) => setWorkEnvironment(e.target.value)}
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-2xl text-xs font-semibold text-slate-900 outline-none focus:border-blue-500 focus:bg-white"
+                  >
+                    <option value="OFFICE">Khối Văn Phòng / IT (Ngồi nhiều, máy tính)</option>
+                    <option value="FACTORY">Sản Xuất / Nhà Máy / Cơ Khí</option>
+                    <option value="LOGISTICS">Vận Tải / Kho Bãi / Logistics</option>
+                    <option value="SERVICE">Dịch Vụ / Bán Lẻ / F&B</option>
+                  </select>
                 </div>
 
                 <div>
@@ -1456,7 +1592,10 @@ export const PackageAdvisor: React.FC<PackageAdvisorProps> = ({
           contactPerson,
           contactPhone,
           contactEmail,
-          employeeScale,
+          employeeScale: `${totalEmployees} nhân sự (Nam: ${maleEmployees} • Nữ: ${femaleEmployees})`,
+          maleEmployees,
+          femaleEmployees,
+          totalEmployees,
           workEnvironment,
           corporatePackageNeed,
           corporateNotes

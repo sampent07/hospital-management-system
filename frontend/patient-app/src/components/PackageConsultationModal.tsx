@@ -31,6 +31,9 @@ export interface CorporateBasicInfo {
   contactPhone: string;
   contactEmail?: string;
   employeeScale: string;
+  maleEmployees?: number;
+  femaleEmployees?: number;
+  totalEmployees?: number;
   workEnvironment: string;
   corporatePackageNeed: string;
   corporateNotes?: string;
@@ -210,7 +213,7 @@ export const PackageConsultationModal: React.FC<PackageConsultationModalProps> =
             </h3>
             <p className="text-xs text-slate-500">
               {targetType === 'CORPORATE'
-                ? 'Chọn gói khám doanh nghiệp hoặc bấm nút gợi ý để AI đối chiếu theo môi trường và quy mô nhân sự.'
+                ? `Doanh nghiệp: ${corporateInfo?.companyName || ''} • Quy mô khám: Nam: ${corporateInfo?.maleEmployees ?? 60} ; Nữ: ${corporateInfo?.femaleEmployees ?? 40} (Tổng: ${corporateInfo?.totalEmployees ?? 100} người)`
                 : 'Chọn gói khám phù hợp hoặc bấm nút gợi ý để AI đối chiếu theo thông tin bạn đã điền.'}
             </p>
           </div>

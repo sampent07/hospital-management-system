@@ -13,306 +13,277 @@ import {
   Search,
   Clock,
   ExternalLink,
-  X
+  X,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  Image as ImageIcon,
+  Users,
+  Eye,
+  Download,
+  Activity
 } from 'lucide-react';
-import { MedicalExamRecord } from '../types';
+import { MedicalExamRecord, MedicalImagingItem, PatientProfile } from '../types';
+import { allMockExamRecords, defaultPatientProfilesList } from '../utils/mockImagingData';
 
-// Dữ liệu mẫu các đợt khám bệnh trong quá khứ của bệnh nhân
-const mockExamRecords: MedicalExamRecord[] = [
-  {
-    id: 'rec-001',
-    recordCode: 'HSBA-20261015-88',
-    examDate: '15/10/2026',
-    examType: 'PACKAGE',
-    packageName: 'Gói Khám Tổng Quát Định Kỳ & Chuyên Sâu Tiêu Hóa',
-    doctorName: 'BSCKII. Trần Hoàng Nam',
-    department: 'Khoa Khám Bệnh - Nội Tổng Hợp',
-    diagnosis: 'Viêm trợt niêm mạc hang vị dạ dày, test HP (+); Tăng huyết áp độ 1 (ổn định).',
-    generalConclusion: 'Sức khỏe Loại II (Khá). Đang có tình trạng viêm dạ dày do vi khuẩn HP, cần tuân thủ phác đồ tiệt trừ 14 ngày và tái khám đúng hẹn. Huyết áp kiểm soát tốt.',
-    serviceResults: [
-      {
-        name: 'Khám Nội Tổng Quát & Đo Huyết Áp',
-        category: 'Lâm sàng',
-        roomNumber: 'Phòng 101',
-        resultValue: '125/80 mmHg - Nhịp tim 74 l/p',
-        status: 'NORMAL',
-        doctorNote: 'Huyết áp ổn định, tim đều rõ, phổi thông khí tốt'
-      },
-      {
-        name: 'Test Vi Khuẩn HP Dạ Dày Qua Hơi Thở C14',
-        category: 'Thăm dò chức năng',
-        roomNumber: 'Phòng TDCN-02',
-        resultValue: 'DƯƠNG TÍNH (+)',
-        status: 'ABNORMAL',
-        doctorNote: 'Chỉ số nhiễm HP: 185 dpm (Ngưỡng âm tính < 50). Cần điều trị tiệt trừ.'
-      },
-      {
-        name: 'Nội Soi Thực Quản - Dạ Dày - Tá Tràng',
-        category: 'Thăm dò chức năng',
-        roomNumber: 'Phòng Nội Soi 01',
-        resultValue: 'Viêm xung huyết và trợt nông hang vị',
-        status: 'ATTENTION',
-        doctorNote: 'Không có ổ loét sâu, không chảy máu, môn vị co bóp tốt'
-      },
-      {
-        name: 'Tổng Phân Tích Tế Bào Máu (CBC 18 chỉ số)',
-        category: 'Xét nghiệm',
-        roomNumber: 'Phòng XN-01',
-        resultValue: 'RBC: 4.7 M/uL | WBC: 6.8 K/uL | PLT: 225 K/uL',
-        status: 'NORMAL',
-        doctorNote: 'Các dòng tế bào máu trong giới hạn bình thường'
-      },
-      {
-        name: 'Sinh Hóa Đường Huyết (Glucose lúc đói)',
-        category: 'Xét nghiệm',
-        roomNumber: 'Phòng XN-02',
-        resultValue: '5.2 mmol/L',
-        normalRange: '3.9 - 6.4 mmol/L',
-        unit: 'mmol/L',
-        status: 'NORMAL',
-        doctorNote: 'Đường huyết hoàn toàn bình thường'
-      },
-      {
-        name: 'Chức Năng Gan (Men gan AST / ALT)',
-        category: 'Xét nghiệm',
-        roomNumber: 'Phòng XN-02',
-        resultValue: 'AST: 24 U/L | ALT: 28 U/L',
-        normalRange: '< 40 U/L',
-        unit: 'U/L',
-        status: 'NORMAL',
-        doctorNote: 'Men gan tốt, không có tổn thương nhu mô gan'
-      },
-      {
-        name: 'Chụp X-Quang Ngực Thẳng KTS',
-        category: 'Chẩn đoán hình ảnh',
-        roomNumber: 'Phòng CĐHA-01',
-        resultValue: 'Tim phổi bình thường',
-        status: 'NORMAL',
-        doctorNote: 'Bóng tim không to, hai phế trường sáng đều, không thâm nhiễm'
-      },
-      {
-        name: 'Siêu Âm Ổ Bụng Tổng Quát KTS',
-        category: 'Chẩn đoán hình ảnh',
-        roomNumber: 'Phòng CĐHA-03',
-        resultValue: 'Gan nhiễm mỡ độ 1 nhẹ, thận & mật không sỏi',
-        status: 'ATTENTION',
-        doctorNote: 'Cần duy trì tập thể dục và hạn chế chất béo động vật'
-      }
-    ],
-    prescription: [
-      {
-        drugName: 'Esomeprazole (Nexium Mups) 40mg',
-        dosage: '1 viên / lần x 1 lần / ngày',
-        usage: 'Uống trước bữa ăn sáng 30 - 60 phút',
-        quantity: '28 viên'
-      },
-      {
-        drugName: 'Amoxicillin 500mg',
-        dosage: '2 viên / lần x 2 lần / ngày',
-        usage: 'Uống sau bữa ăn sáng và tối',
-        quantity: '56 viên'
-      },
-      {
-        drugName: 'Clarithromycin 500mg',
-        dosage: '1 viên / lần x 2 lần / ngày',
-        usage: 'Uống sau bữa ăn sáng và tối',
-        quantity: '28 viên'
-      }
-    ],
-    doctorAdvice: 'Uống thuốc đúng giờ, tuyệt đối không tự ý ngưng kháng sinh khi hết triệu chứng. Kiêng hoàn toàn rượu bia, thuốc lá, ớt, tiêu, cà phê đặc. Ăn chậm nhai kỹ, không ăn no sát giờ đi ngủ.',
-    followUpRecommendation: 'Bác sĩ đã lên lịch hẹn tái khám vào ngày 25/11/2026 (sau 4 tuần) để kiểm tra lại vi khuẩn HP bằng test hơi thở.'
-  },
-  {
-    id: 'rec-002',
-    recordCode: 'HSBA-20260522-42',
-    examDate: '22/05/2026',
-    examType: 'PACKAGE',
-    packageName: 'Khám Sức Khỏe Doanh Nghiệp Định Kỳ Hàng Năm',
-    doctorName: 'BSCKI. Lê Thị Thu Thảo',
-    department: 'Khoa Sức Khỏe Nghề Nghiệp',
-    diagnosis: 'Rối loạn lipid máu nhẹ (Cholesterol 5.8 mmol/L); Căng cơ vùng cổ gáy do tư thế ngồi văn phòng.',
-    generalConclusion: 'Sức khỏe Loại II. Thể lực tốt, chức năng gan thận bình thường. Cần vận động giãn cơ cổ gáy và điều chỉnh chế độ ăn giảm mỡ động vật.',
-    serviceResults: [
-      {
-        name: 'Khám Thể Lực & Huyết Áp',
-        category: 'Lâm sàng',
-        roomNumber: 'Phòng 102',
-        resultValue: '120/78 mmHg - Chiều cao: 172cm, Cân nặng: 68kg (BMI 23.0)',
-        status: 'NORMAL',
-        doctorNote: 'Chỉ số thể trọng chuẩn, thể lực tốt'
-      },
-      {
-        name: 'Bộ Mỡ Máu (Cholesterol toàn phần)',
-        category: 'Xét nghiệm',
-        roomNumber: 'Phòng XN-02',
-        resultValue: '5.8 mmol/L',
-        normalRange: '< 5.2 mmol/L',
-        unit: 'mmol/L',
-        status: 'ATTENTION',
-        doctorNote: 'Hơi cao nhẹ so với ngưỡng tham chiếu'
-      },
-      {
-        name: 'Khám Khúc Xạ Mắt & Đo Thị Lực KTS',
-        category: 'Chuyên khoa lẻ',
-        roomNumber: 'Phòng 204',
-        resultValue: 'Mắt phải: 10/10 | Mắt trái: 10/10',
-        status: 'NORMAL',
-        doctorNote: 'Thị lực tốt, không có tật khúc xạ'
-      },
-      {
-        name: 'Chụp X-Quang Cột Sống Cổ Thẳng Nghiêng',
-        category: 'Chẩn đoán hình ảnh',
-        roomNumber: 'Phòng CĐHA-01',
-        resultValue: 'Thẳng trục sinh lý, không trượt đốt sống',
-        status: 'NORMAL',
-        doctorNote: 'Chưa có thoái hóa gai xương rõ rệt'
-      }
-    ],
-    prescription: [
-      {
-        drugName: 'Vitamin 3B (B1, B6, B12)',
-        dosage: '1 viên / lần x 2 lần / ngày',
-        usage: 'Uống sau ăn',
-        quantity: '30 viên'
-      }
-    ],
-    doctorAdvice: 'Tránh ngồi liên tục quá 60 phút, thực hiện bài tập xoay cổ nhẹ nhàng. Tăng cường rau xanh và cá trong bữa ăn.',
-    followUpRecommendation: 'Tái kiểm tra mỡ máu trong đợt khám sức khỏe định kỳ tiếp theo.'
-  },
-  {
-    id: 'rec-003',
-    recordCode: 'HSBA-20251118-19',
-    examDate: '18/11/2025',
-    examType: 'SINGLE',
-    packageName: 'Khám Chuyên Khoa Răng - Hàm - Mặt & Nha Khoa',
-    doctorName: 'ThS.BS. Phạm Quốc Huy',
-    department: 'Khoa Răng - Hàm - Mặt',
-    diagnosis: 'Vôi răng độ 2, viêm nướu mép răng hàm dưới nhẹ; Răng khôn số 38 mọc lệch không viêm.',
-    generalConclusion: 'Đã hoàn tất lấy cao răng sóng siêu âm và đánh bóng men răng. Men răng sáng bóng, nướu cầm máu tốt.',
-    serviceResults: [
-      {
-        name: 'Khám Chuyên Khoa Răng Miệng',
-        category: 'Lâm sàng',
-        roomNumber: 'Phòng 105',
-        resultValue: 'Có vôi răng hàm trên và dưới mức độ trung bình',
-        status: 'ATTENTION',
-        doctorNote: 'Không sâu răng hoạt tính, khớp cắn chuẩn'
-      },
-      {
-        name: 'Lấy Cao Răng Sóng Siêu Âm & Đánh Bóng',
-        category: 'Thủ thuật',
-        roomNumber: 'Phòng 105',
-        resultValue: 'Làm sạch hoàn toàn mảng bám vi khuẩn',
-        status: 'NORMAL',
-        doctorNote: 'Nướu lành thương tốt sau thủ thuật'
-      },
-      {
-        name: 'Chụp X-Quang Toàn Cảnh Răng Panorama KTS',
-        category: 'Chẩn đoán hình ảnh',
-        roomNumber: 'Phòng CĐHA-02',
-        resultValue: 'Răng số 38 mọc nghiêng 30 độ, chưa chèn ép răng số 37',
-        status: 'NORMAL',
-        doctorNote: 'Chưa cần nhổ, theo dõi định kỳ 6 tháng'
-      }
-    ],
-    doctorAdvice: 'Đánh răng ít nhất 2 lần/ngày bằng bàn chải lông mềm, sử dụng chỉ nha khoa và nước súc miệng sau bữa ăn.',
-    followUpRecommendation: 'Kiểm tra răng miệng định kỳ sau 6 tháng.'
-  }
-];
+interface MedicalResultsViewProps {
+  profiles?: PatientProfile[];
+  selectedProfileId?: string;
+  onSelectProfile?: (profileId: string) => void;
+  onGoToProfileView?: () => void;
+}
 
-export const MedicalResultsView: React.FC = () => {
+export const MedicalResultsView: React.FC<MedicalResultsViewProps> = ({
+  profiles = defaultPatientProfilesList,
+  selectedProfileId: propSelectedProfileId,
+  onSelectProfile,
+  onGoToProfileView
+}) => {
+  // Quản lý hồ sơ bệnh nhân được chọn để xem kết quả khám
+  // Mặc định chọn hồ sơ được truyền vào hoặc hồ sơ mặc định (prof-self)
+  const [internalSelectedProfileId, setInternalSelectedProfileId] = useState<string>(() => {
+    if (propSelectedProfileId) return propSelectedProfileId;
+    const defaultP = profiles.find((p) => p.isDefault) || profiles[0];
+    return defaultP?.id || 'prof-self';
+  });
+
+  const activeProfileId = propSelectedProfileId || internalSelectedProfileId;
+  const currentProfile = profiles.find((p) => p.id === activeProfileId) || profiles[0] || defaultPatientProfilesList[0];
+
+  const handleSelectMember = (profileId: string) => {
+    setInternalSelectedProfileId(profileId);
+    setExpandedRecordId(null);
+    if (onSelectProfile) {
+      onSelectProfile(profileId);
+    }
+  };
+
   const [searchTerm, setSearchTerm] = useState('');
-  const [expandedRecordId, setExpandedRecordId] = useState<string | null>('rec-001');
+  const [expandedRecordId, setExpandedRecordId] = useState<string | null>(null);
   const [selectedRecordForModal, setSelectedRecordForModal] = useState<MedicalExamRecord | null>(null);
 
-  // Lọc theo từ khóa tìm kiếm (theo tên gói, bác sĩ hoặc ngày)
-  const filteredRecords = mockExamRecords.filter((rec) => {
+  // State cho Modal phóng to xem ảnh chẩn đoán hình ảnh (DICOM / PACS viewer)
+  const [selectedImageForViewer, setSelectedImageForViewer] = useState<MedicalImagingItem | null>(null);
+  const [zoomLevel, setZoomLevel] = useState<number>(1);
+  const [isInverted, setIsInverted] = useState<boolean>(false);
+
+  // Lọc các đợt khám thuộc hồ sơ bệnh nhân đang chọn
+  const patientRecords = allMockExamRecords.filter((rec) => {
+    if (rec.profileId) {
+      return rec.profileId === currentProfile.id;
+    }
+    // Nếu chưa gán profileId thì mặc định gán cho hồ sơ bản thân
+    return currentProfile.id === 'prof-self';
+  });
+
+  // Lọc tiếp theo từ khóa tìm kiếm
+  const filteredRecords = patientRecords.filter((rec) => {
     const term = searchTerm.toLowerCase();
     return (
       rec.packageName.toLowerCase().includes(term) ||
       rec.doctorName.toLowerCase().includes(term) ||
       rec.examDate.includes(term) ||
-      rec.diagnosis.toLowerCase().includes(term)
+      rec.diagnosis.toLowerCase().includes(term) ||
+      (rec.imagingResults && rec.imagingResults.some((img) => img.title.toLowerCase().includes(term)))
     );
   });
+
+  // Tổng số ảnh chụp y khoa của hồ sơ hiện tại
+  const totalImagingCount = patientRecords.reduce(
+    (acc, cur) => acc + (cur.imagingResults?.length || 0),
+    0
+  );
 
   const toggleExpand = (id: string) => {
     setExpandedRecordId((prev) => (prev === id ? null : id));
   };
 
+  const openImageViewer = (image: MedicalImagingItem) => {
+    setSelectedImageForViewer(image);
+    setZoomLevel(1);
+    setIsInverted(false);
+  };
+
   return (
     <div className="space-y-6">
-      {/* 1. Header Trang Kết Quả Khám */}
-      <div className="bg-white p-5 md:p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-xl mb-2 border border-emerald-200">
-            <FileText className="w-3.5 h-3.5" />
-            <span>Hồ Sơ Y Khoa Bệnh Nhân</span>
+      {/* 1. KHU VỰC BẮT BUỘC: CHỌN HỒ SƠ BỆNH NHÂN TRƯỚC KHI XEM KẾT QUẢ KHÁM */}
+      <div className="bg-white p-5 md:p-6 rounded-3xl border-2 border-blue-200 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-sm md:text-base font-black text-slate-900 tracking-tight flex items-center gap-2">
+                <span>Chọn Hồ Sơ Bệnh Nhân Để Xem Kết Quả Khám</span>
+                <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                  {profiles.length} hồ sơ trong tài khoản
+                </span>
+              </h2>
+              <p className="text-xs text-slate-500">
+                Tài khoản có nhiều hồ sơ người thân (Ba, Mẹ, Con...). Nhấp vào một hồ sơ bên dưới để tra cứu bệnh án:
+              </p>
+            </div>
           </div>
-          <h1 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">
-            Kết Quả Các Đợt Khám Bệnh
-          </h1>
-          <p className="text-xs md:text-sm text-slate-500 mt-1">
-            Tra cứu ngày tháng, chẩn đoán của bác sĩ và kết quả chi tiết từng dịch vụ qua các đợt khám
-          </p>
+
+          {onGoToProfileView && (
+            <button
+              onClick={onGoToProfileView}
+              className="text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-xl border border-blue-200 transition-all self-start sm:self-center cursor-pointer"
+            >
+              + Quản Lý / Thêm Hồ Sơ Mới
+            </button>
+          )}
         </div>
 
-        {/* Ô Tìm Kiếm Nhanh */}
-        <div className="relative w-full md:w-72">
-          <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Tìm theo ngày, gói hoặc chẩn đoán..."
-            className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-800 outline-none focus:border-blue-500 focus:bg-white transition-all shadow-inner"
-          />
+        {/* Danh sách thẻ hồ sơ bệnh nhân dạng ngang để chọn nhanh */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {profiles.map((p) => {
+            const isSelected = p.id === activeProfileId;
+            const recordsCount = allMockExamRecords.filter((r) => r.profileId === p.id).length;
+
+            return (
+              <div
+                key={p.id}
+                onClick={() => handleSelectMember(p.id)}
+                className={`p-3.5 rounded-2xl border-2 transition-all cursor-pointer relative flex items-start gap-3 ${
+                  isSelected
+                    ? 'border-blue-600 bg-blue-50/60 shadow-md ring-2 ring-blue-500/20'
+                    : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
+                }`}
+              >
+                <div
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-bold text-sm shadow-xs ${
+                    isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'
+                  }`}
+                >
+                  {p.gender === 'FEMALE' ? '👩' : '👨'}
+                </div>
+
+                <div className="flex-1 min-w-0 space-y-1">
+                  <div className="flex items-center justify-between gap-1">
+                    <div className="text-xs font-black text-slate-900 truncate">{p.fullName}</div>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                        p.relationship === 'SELF'
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-amber-100 text-amber-800'
+                      }`}
+                    >
+                      {p.relationshipLabel || (p.relationship === 'SELF' ? 'Bản thân' : 'Người thân')}
+                    </span>
+                  </div>
+
+                  <div className="text-[11px] text-slate-500 font-medium">
+                    {p.gender === 'FEMALE' ? 'Nữ' : 'Nam'} • {p.age} tuổi • {p.phone}
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1 text-[11px]">
+                    <span className="font-semibold text-slate-600">
+                      {recordsCount > 0 ? (
+                        <span className="text-emerald-700 font-bold">{recordsCount} đợt khám</span>
+                      ) : (
+                        <span className="text-slate-400">Chưa có đợt khám</span>
+                      )}
+                    </span>
+                    {isSelected && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-black text-blue-700 bg-white px-2 py-0.5 rounded-full border border-blue-200">
+                        <CheckCircle2 className="w-3 h-3 text-blue-600" />
+                        Đang Xem
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* 2. Thống Kê Nhanh */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-gradient-to-br from-blue-500/10 to-indigo-500/10 border border-blue-200/80 p-4 rounded-2xl flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-sm">
-            <Calendar className="w-5 h-5" />
+      {/* 2. BANNER THÔNG TIN BỆNH NHÂN HIỆN TẠI & TÌM KIẾM */}
+      <div className="bg-gradient-to-r from-blue-700 to-indigo-800 text-white p-5 md:p-6 rounded-3xl shadow-sm space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1.5">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/15 text-blue-100 text-xs font-bold rounded-xl border border-white/20 backdrop-blur-xs">
+              <User className="w-3.5 h-3.5" />
+              <span>
+                Hồ Sơ: {currentProfile.fullName} ({currentProfile.relationshipLabel || 'Bản thân'})
+              </span>
+            </div>
+            <h1 className="text-xl md:text-2xl font-black text-white tracking-tight">
+              Kết Quả Khám Bệnh & Chẩn Đoán Hình Ảnh
+            </h1>
+            <p className="text-xs md:text-sm text-blue-100/90">
+              Mã BHYT: {currentProfile.insuranceCard || 'Chưa cập nhật'} • CCCD: {currentProfile.idCardNumber || 'Chưa cập nhật'} • {currentProfile.address}
+            </p>
           </div>
-          <div>
-            <div className="text-[11px] font-semibold text-slate-500">Tổng Đợt Khám</div>
-            <div className="text-base font-black text-slate-800">{mockExamRecords.length} đợt khám</div>
+
+          {/* Ô Tìm Kiếm Nhanh */}
+          <div className="relative w-full md:w-80">
+            <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Tìm theo ngày, gói, chẩn đoán, X-quang..."
+              className="w-full pl-9 pr-4 py-2.5 bg-white text-slate-900 border border-transparent rounded-2xl text-xs font-medium outline-none focus:ring-2 focus:ring-blue-300 shadow-md placeholder:text-slate-400"
+            />
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border border-emerald-200/80 p-4 rounded-2xl flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
-            <CheckCircle2 className="w-5 h-5" />
+        {/* Thống kê 3 chỉ số nhanh của hồ sơ này */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-white/15">
+          <div className="bg-white/10 backdrop-blur-xs rounded-2xl p-3 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+              <Calendar className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <div className="text-[11px] text-blue-200">Tổng Đợt Khám</div>
+              <div className="text-sm font-black text-white">{patientRecords.length} đợt khám</div>
+            </div>
           </div>
-          <div>
-            <div className="text-[11px] font-semibold text-slate-500">Đợt Khám Mới Nhất</div>
-            <div className="text-base font-black text-emerald-800">15/10/2026</div>
-          </div>
-        </div>
 
-        <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-200/80 p-4 rounded-2xl flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-sm">
-            <ShieldCheck className="w-5 h-5" />
+          <div className="bg-white/10 backdrop-blur-xs rounded-2xl p-3 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-emerald-400/20 text-emerald-300 flex items-center justify-center shrink-0">
+              <ImageIcon className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-[11px] text-blue-200">Kết Quả Ảnh Chụp (X-Quang, Siêu Âm...)</div>
+              <div className="text-sm font-black text-emerald-300">{totalImagingCount} kết quả ảnh</div>
+            </div>
           </div>
-          <div>
-            <div className="text-[11px] font-semibold text-slate-500">Tình Trạng Kết Quả</div>
-            <div className="text-base font-black text-purple-900">Đã Ký Số Bác Sĩ</div>
+
+          <div className="bg-white/10 backdrop-blur-xs rounded-2xl p-3 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <div className="text-[11px] text-blue-200">Chữ Ký Số Y Khoa</div>
+              <div className="text-sm font-black text-white">Đã Xác Thực Bác Sĩ</div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* 3. Danh Sách Các Đợt Khám */}
+      {/* 3. DANH SÁCH CÁC ĐỢT KHÁM CỦA BỆNH NHÂN ĐANG CHỌN */}
       <div className="space-y-4">
         {filteredRecords.length === 0 ? (
-          <div className="p-8 text-center bg-white rounded-3xl border border-slate-200">
-            <p className="text-sm text-slate-500">Không tìm thấy đợt khám nào khớp với từ khóa tìm kiếm.</p>
+          <div className="p-10 text-center bg-white rounded-3xl border border-slate-200 space-y-3">
+            <div className="w-14 h-14 mx-auto rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center">
+              <FileText className="w-7 h-7" />
+            </div>
+            <h3 className="text-sm font-bold text-slate-800">
+              Chưa có kết quả khám cho hồ sơ "{currentProfile.fullName}"
+            </h3>
+            <p className="text-xs text-slate-500 max-w-md mx-auto">
+              Hồ sơ này chưa thực hiện đợt khám nào hoặc không có dữ liệu khớp với từ khóa tìm kiếm. Bạn có thể sang mục "Đăng Ký Gói Khám" để đặt lịch khám cho thành viên này.
+            </p>
           </div>
         ) : (
           filteredRecords.map((record, index) => {
             const isExpanded = expandedRecordId === record.id;
             const isLatest = index === 0;
+            const imagingList = record.imagingResults || [];
 
             return (
               <div
@@ -345,7 +316,13 @@ export const MedicalResultsView: React.FC = () => {
                         </span>
                         {isLatest && (
                           <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                            ★ Đợt Khám Gần Nhất
+                            ★ Đợt Khám Mới Nhất
+                          </span>
+                        )}
+                        {imagingList.length > 0 && (
+                          <span className="text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200 flex items-center gap-1">
+                            <ImageIcon className="w-3 h-3" />
+                            {imagingList.length} Ảnh Chụp
                           </span>
                         )}
                         <span className="text-[11px] text-slate-400">
@@ -383,7 +360,7 @@ export const MedicalResultsView: React.FC = () => {
 
                 {/* Nội Dung Chi Tiết Khi Mở Rộng */}
                 {isExpanded && (
-                  <div className="px-5 md:px-6 pb-6 pt-2 border-t border-slate-100 space-y-5 bg-slate-50/40">
+                  <div className="px-5 md:px-6 pb-6 pt-2 border-t border-slate-100 space-y-6 bg-slate-50/40">
                     {/* A. Kết Luận Chung & Chẩn Đoán Của Bác Sĩ */}
                     <div className="p-4 bg-blue-50/80 rounded-2xl border border-blue-200/90 space-y-2">
                       <div className="flex items-center gap-2 text-xs font-bold text-blue-900 uppercase">
@@ -398,11 +375,91 @@ export const MedicalResultsView: React.FC = () => {
                       </p>
                     </div>
 
-                    {/* B. Bảng Kết Quả Chi Tiết Từng Dịch Vụ / Xét Nghiệm */}
+                    {/* B. MỤC ĐẶC BIỆT THEO YÊU CẦU: KẾT QUẢ ẢNH CHỤP (X-QUANG, SIÊU ÂM, NỘI SOI...) */}
+                    {imagingList.length > 0 && (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-xs font-black text-purple-900 uppercase tracking-wide flex items-center gap-2">
+                            <ImageIcon className="w-4 h-4 text-purple-600" />
+                            <span>Kết Quả Ảnh Chụp Y Khoa ({imagingList.length} phim chụp & hình ảnh)</span>
+                          </h3>
+                          <span className="text-[11px] text-purple-700 font-bold bg-purple-50 px-2 py-0.5 rounded-lg border border-purple-200">
+                            Chuẩn hình ảnh y tế DICOM KTS
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                          {imagingList.map((img) => (
+                            <div
+                              key={img.id}
+                              className="bg-white rounded-2xl border border-purple-200/90 shadow-sm overflow-hidden flex flex-col hover:border-purple-400 hover:shadow-md transition-all group"
+                            >
+                              {/* Khung xem trước ảnh y khoa có overlay nút phóng to */}
+                              <div
+                                onClick={() => openImageViewer(img)}
+                                className="relative h-44 bg-slate-950 overflow-hidden cursor-pointer"
+                              >
+                                <img
+                                  src={img.imageUrl}
+                                  alt={img.title}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-90 group-hover:opacity-100"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 flex items-end justify-between p-3">
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-600/90 text-white backdrop-blur-xs">
+                                    {img.modalityName}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openImageViewer(img);
+                                    }}
+                                    className="px-2.5 py-1 bg-white/90 hover:bg-white text-slate-900 text-[11px] font-bold rounded-lg shadow-sm flex items-center gap-1 transition-all"
+                                  >
+                                    <Eye className="w-3 h-3 text-purple-600" />
+                                    <span>Phóng to</span>
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Thông tin chẩn đoán hình ảnh */}
+                              <div className="p-3.5 flex-1 flex flex-col justify-between space-y-2">
+                                <div>
+                                  <h4 className="text-xs font-bold text-slate-900 line-clamp-1">
+                                    {img.title}
+                                  </h4>
+                                  <div className="text-[10px] text-slate-500 mt-0.5">
+                                    {img.roomNumber} • Chụp: {img.captureTime}
+                                  </div>
+                                </div>
+
+                                <div className="p-2 bg-slate-50 rounded-xl border border-slate-100 text-[11px] text-slate-700 line-clamp-3">
+                                  <strong className="text-purple-900 font-semibold">Kết luận: </strong>
+                                  {img.diagnosticConclusion}
+                                </div>
+
+                                <div className="pt-1 flex items-center justify-between text-[10px] text-slate-500 border-t border-slate-100">
+                                  <span>BS: {img.technicianOrDoctor}</span>
+                                  <button
+                                    onClick={() => openImageViewer(img)}
+                                    className="text-purple-700 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                                  >
+                                    <span>Xem chi tiết PACS</span>
+                                    <ChevronRightIcon className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* C. Bảng Kết Quả Chi Tiết Từng Dịch Vụ / Xét Nghiệm */}
                     <div className="space-y-2.5">
                       <div className="flex items-center justify-between">
                         <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
-                          Chi Tiết Các Hạng Mục Dịch Vụ Đã Khám ({record.serviceResults.length} dịch vụ)
+                          Chi Tiết Các Hạng Mục Dịch Vụ & Xét Nghiệm ({record.serviceResults.length} dịch vụ)
                         </h3>
                         <span className="text-[11px] text-slate-500 font-medium">
                           Ngày thực hiện: {record.examDate}
@@ -451,7 +508,7 @@ export const MedicalResultsView: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* C. Đơn Thuốc Đợt Khám (nếu có) */}
+                    {/* D. Đơn Thuốc Đợt Khám (nếu có) */}
                     {record.prescription && record.prescription.length > 0 && (
                       <div className="p-4 bg-emerald-50/60 rounded-2xl border border-emerald-200 space-y-2.5">
                         <div className="flex items-center gap-2 text-xs font-bold text-emerald-900 uppercase">
@@ -482,7 +539,7 @@ export const MedicalResultsView: React.FC = () => {
                       </div>
                     )}
 
-                    {/* D. Lời Dặn & Khuyến Cáo Tái Khám */}
+                    {/* E. Lời Dặn & Khuyến Cáo Tái Khám */}
                     <div className="p-4 bg-amber-50/70 rounded-2xl border border-amber-200/80 space-y-2">
                       <div className="flex items-center gap-2 text-xs font-bold text-amber-900 uppercase">
                         <AlertCircle className="w-4 h-4 text-amber-600" />
@@ -499,7 +556,7 @@ export const MedicalResultsView: React.FC = () => {
                       )}
                     </div>
 
-                    {/* E. Nút Hành Động: Xem Chi Tiết Bản Đầy Đủ & In */}
+                    {/* F. Nút Hành Động: Xem Chi Tiết Bản Đầy Đủ & In */}
                     <div className="pt-2 flex flex-wrap items-center justify-end gap-3">
                       <button
                         onClick={() => setSelectedRecordForModal(record)}
@@ -517,7 +574,157 @@ export const MedicalResultsView: React.FC = () => {
         )}
       </div>
 
-      {/* 4. Modal Xem Phiếu Kết Quả Khám Đầy Đủ (Chuẩn Bệnh Viện) */}
+      {/* 4. MODAL XEM ẢNH CHẨN ĐOÁN HÌNH ẢNH (PACS / DICOM VIEWER THEME) */}
+      {selectedImageForViewer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-slate-900 text-white w-full max-w-5xl rounded-3xl border border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+            {/* Top Bar Viewer */}
+            <div className="bg-slate-800/90 px-5 py-3 border-b border-slate-700 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-purple-600/30 text-purple-300 flex items-center justify-center border border-purple-500/40">
+                  <Activity className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white leading-tight">
+                    {selectedImageForViewer.title}
+                  </h3>
+                  <div className="text-[11px] text-slate-400">
+                    Bệnh nhân: <strong className="text-white">{currentProfile.fullName}</strong> • Mã HS: {currentProfile.idCardNumber || '079088...'} • {selectedImageForViewer.captureTime}
+                  </div>
+                </div>
+              </div>
+
+              {/* Tools Phóng to / Thu nhỏ / Đảo màu */}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 bg-slate-900 border border-slate-700 rounded-xl p-1">
+                  <button
+                    onClick={() => setZoomLevel((z) => Math.max(0.6, z - 0.25))}
+                    title="Thu nhỏ"
+                    className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+                  >
+                    <ZoomOut className="w-4 h-4" />
+                  </button>
+                  <span className="text-[11px] font-mono px-2 text-slate-300">
+                    {Math.round(zoomLevel * 100)}%
+                  </span>
+                  <button
+                    onClick={() => setZoomLevel((z) => Math.min(3, z + 0.25))}
+                    title="Phóng to"
+                    className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+                  >
+                    <ZoomIn className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setZoomLevel(1)}
+                    title="Đặt lại kích thước gốc"
+                    className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setIsInverted((v) => !v)}
+                    title="Đảo âm bản / High Contrast"
+                    className={`px-2 py-1 text-[11px] font-bold rounded-lg transition-colors cursor-pointer ${
+                      isInverted ? 'bg-purple-600 text-white' : 'text-slate-300 hover:bg-slate-800'
+                    }`}
+                  >
+                    Âm bản
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => setSelectedImageForViewer(null)}
+                  className="w-9 h-9 rounded-xl bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                  title="Đóng xem ảnh"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Viewer Body: Chia 2 cột (Cột Trái là Ảnh KTS, Cột Phải là Thông Tin Chẩn Đoán) */}
+            <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
+              {/* Vùng hiển thị ảnh có thể kéo pan hoặc cuộn */}
+              <div className="flex-1 bg-black flex items-center justify-center p-4 overflow-auto min-h-[320px] md:min-h-0 relative">
+                <img
+                  src={selectedImageForViewer.imageUrl}
+                  alt={selectedImageForViewer.title}
+                  style={{
+                    transform: `scale(${zoomLevel})`,
+                    filter: isInverted ? 'invert(1) contrast(1.2)' : 'none',
+                    transition: 'transform 0.15s ease-out'
+                  }}
+                  className="max-h-[65vh] max-w-full object-contain rounded-lg shadow-2xl select-none"
+                />
+                <div className="absolute bottom-3 left-4 text-[10px] text-slate-500 font-mono pointer-events-none">
+                  KTS DICOM Matrix • Window Level: Preset Auto
+                </div>
+              </div>
+
+              {/* Sidebar Chi Tiết Y Khoa */}
+              <div className="w-full md:w-80 bg-slate-850 p-5 border-t md:border-t-0 md:border-l border-slate-700/80 space-y-4 overflow-y-auto text-xs">
+                <div>
+                  <span className="text-[10px] font-bold uppercase text-purple-400 block tracking-wider">
+                    Loại Kỹ Thuật
+                  </span>
+                  <div className="text-sm font-bold text-white mt-0.5">
+                    {selectedImageForViewer.modalityName} ({selectedImageForViewer.modality})
+                  </div>
+                </div>
+
+                <div className="p-3 bg-purple-950/40 border border-purple-800/50 rounded-xl space-y-1">
+                  <span className="text-[10px] font-bold uppercase text-purple-300 block">
+                    Kết Luận Chẩn Đoán Của Bác Sĩ
+                  </span>
+                  <p className="text-xs text-slate-200 leading-relaxed">
+                    {selectedImageForViewer.diagnosticConclusion}
+                  </p>
+                </div>
+
+                {selectedImageForViewer.techniqueDetails && (
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold uppercase text-slate-400 block">
+                      Thông Số Kỹ Thuật Chụp
+                    </span>
+                    <p className="text-[11px] text-slate-300 font-mono bg-slate-900 p-2.5 rounded-xl border border-slate-800 leading-relaxed">
+                      {selectedImageForViewer.techniqueDetails}
+                    </p>
+                  </div>
+                )}
+
+                <div className="space-y-2 pt-2 border-t border-slate-700/80">
+                  <div className="flex justify-between text-slate-400 text-[11px]">
+                    <span>Địa điểm thực hiện:</span>
+                    <strong className="text-slate-200">{selectedImageForViewer.roomNumber}</strong>
+                  </div>
+                  <div className="flex justify-between text-slate-400 text-[11px]">
+                    <span>Bác sĩ / Kỹ thuật viên:</span>
+                    <strong className="text-slate-200">{selectedImageForViewer.technicianOrDoctor}</strong>
+                  </div>
+                  <div className="flex justify-between text-slate-400 text-[11px]">
+                    <span>Thời gian chụp:</span>
+                    <strong className="text-slate-200">{selectedImageForViewer.captureTime}</strong>
+                  </div>
+                </div>
+
+                <div className="pt-3">
+                  <a
+                    href={selectedImageForViewer.imageUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl text-center flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Tải Ảnh Gốc Độ Phân Giải Cao</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 5. MODAL XEM PHIẾU KẾT QUẢ KHÁM TOÀN VĂN (CHUẨN BỆNH VIỆN) */}
       {selectedRecordForModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
           <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-8">
@@ -561,19 +768,23 @@ export const MedicalResultsView: React.FC = () => {
                 </div>
               </div>
 
-              {/* Thông tin Hành Chính */}
+              {/* Thông tin Hành Chính Bệnh Nhân Được Chọn */}
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
                 <div>
                   <span className="text-slate-500 block">Họ và tên bệnh nhân:</span>
-                  <strong className="text-slate-900 font-bold">Lê Văn Hùng</strong>
+                  <strong className="text-slate-900 font-bold">{currentProfile.fullName}</strong>
                 </div>
                 <div>
-                  <span className="text-slate-500 block">Năm sinh / Tuổi:</span>
-                  <strong className="text-slate-900 font-bold">1988 (38 tuổi) - Nam</strong>
+                  <span className="text-slate-500 block">Quan hệ / Tuổi / Giới:</span>
+                  <strong className="text-slate-900 font-bold">
+                    {currentProfile.relationshipLabel || 'Bản thân'} • {currentProfile.age} tuổi ({currentProfile.gender === 'FEMALE' ? 'Nữ' : 'Nam'})
+                  </strong>
                 </div>
                 <div>
                   <span className="text-slate-500 block">Số Thẻ BHYT / CCCD:</span>
-                  <strong className="text-slate-900 font-mono font-bold">DN 4 79 20261111</strong>
+                  <strong className="text-slate-900 font-mono font-bold">
+                    {currentProfile.insuranceCard || currentProfile.idCardNumber || 'Chưa cập nhật'}
+                  </strong>
                 </div>
                 <div>
                   <span className="text-slate-500 block">Ngày khám bệnh:</span>
@@ -696,3 +907,11 @@ export const MedicalResultsView: React.FC = () => {
     </div>
   );
 };
+
+function ChevronRightIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+    </svg>
+  );
+}
